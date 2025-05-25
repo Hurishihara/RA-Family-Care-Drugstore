@@ -1,5 +1,7 @@
 @import 'tailwindcss';
-@import "tw-animate-css";
+@import 'tw-animate-css';
+@import '@fontsource-variable/chivo';
+@import '@fontsource-variable/figtree';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -108,6 +110,24 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+@theme {
+  --font-primary: 'Chivo Variable', sans-serif;
+  --font-secondary: 'Figtree Variable', sans-serif;
+
+  --color-deep-sage-green: #3F7353;
+  --color-deep-sage-green-950: #101e16;
+  --color-deep-sage-green-900: #1f3528;
+  --color-deep-sage-green-800: #254031;
+  --color-deep-sage-green-700: #2c503b;
+  --color-deep-sage-green-600: #3f7353;
+  --color-deep-sage-green-500: #4a7f5d;
+  --color-deep-sage-green-400: #6b9c7b;
+  --color-deep-sage-green-300: #98bda3;
+  --color-deep-sage-green-200: #c1d9c7;
+  --color-deep-sage-green-100: ##dfece1;
+  --color-deep-sage-green-50: #f2f7f3;
 }
 
 @layer base {
