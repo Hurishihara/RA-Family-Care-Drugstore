@@ -1,0 +1,12 @@
+# Environment Variables
+.env
+.env.development
+.env.production
+
+# Node.js dependencies
+node_modules/
+
+# General OS files
+.DS_Store
+Thumbs.db
+
