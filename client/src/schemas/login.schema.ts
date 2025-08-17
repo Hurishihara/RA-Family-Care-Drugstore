@@ -5,6 +5,7 @@ const loginSchema = z.object({
     password: z.string().min(6, { message: 'Password must be at least 6 characters long' }),
 })
 
+export type LoginFormType = z.infer<typeof loginSchema>;
 export { loginSchema };
 /* This code defines a Zod schema for validating a login form. The schema requires the username 
 to be at least 2 characters long and the password to be at least 6 characters long. It also exports the 

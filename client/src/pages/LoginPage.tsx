@@ -1,21 +1,26 @@
 import { TabletsIcon } from 'lucide-react';
 import sampleLoginCover from '../assets/minimalist-login-cover.jpg'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { loginSchema } from '@/schemas/loginSchema';
+import { loginSchema } from '@/schemas/login.schema';
 import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import type { loginFormType } from '@/types/loginType';
 
 const LoginPage = () => {
 
-    const loginForm = useForm({
+    const loginForm = useForm<loginFormType>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
             username: '',
             password: ''
         }
     })
+
+    const handleLogin = async (data: loginFormType) => {
+        console.log('Login data:', data);
+    }
 
     return (
         <>
@@ -33,7 +38,7 @@ const LoginPage = () => {
                             </p>
                         </div>
                         <Form {...loginForm}>
-                            <form id='login-form'>
+                            <form id='login-form' onSubmit={loginForm.handleSubmit(handleLogin)}>
                                 <div className='flex flex-col gap-5 w-100'>
                                     <FormField control={loginForm.control} name='username' render={({ field }) => (
                                         <FormItem>
