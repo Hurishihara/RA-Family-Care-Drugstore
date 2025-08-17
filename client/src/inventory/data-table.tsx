@@ -2,7 +2,6 @@ import * as React from 'react'
 import {
     type ColumnDef,
     type ColumnFiltersState,
-    type VisibilityState,
     type SortingState,
     flexRender,
     getCoreRowModel,
@@ -20,18 +19,27 @@ import {
     TableRow
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, PackageSearchIcon, PillBottleIcon, TextSearchIcon } from 'lucide-react'
+import { ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, PackageSearchIcon, PlusIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import AddMedicineDialog from './sub-components/add-medicine-dialog'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { medicineSchema, type medicineFormType } from '@/schemas/medicine.schema'
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
 }
 
+
+
 const DataTable = <TData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) => {
+
+    const [ isDialogOpen, setIsDialogOpen ] = React.useState(false) 
+
     const [ columnFilters, setColumnFilters ] = React.useState<ColumnFiltersState>([])
     const [ sorting, setSorting ] = React.useState<SortingState>([])
 
@@ -49,26 +57,30 @@ const DataTable = <TData, TValue>({
             sorting,
         }
     })
-
-    const totalRows = data.length;
-    const currentPage = table.getState().pagination.pageIndex;
-    const currentPageSize = table.getState().pagination.pageSize;
-    const startRow = currentPage * currentPageSize + 1;
-    const endRow = Math.min((currentPage + 1) * currentPageSize, totalRows);
-
+    
     return (
         <>
-            <div className='flex flex-col items-left m-4 gap-1'>
+            <div className='flex flex-col items-left m-4 gap-2'>
                 <h1 className='font-primary font-semibold text-2xl text-black'>Inventory Summary</h1>
                 <h1 className='font-primary font-normal text-xs text-black'>View and manage all medications in your pharmacy stock</h1>
-            <div className='relative max-w-xs mt-3'>
-                <Input 
-                placeholder='Filter by name...' 
-                value={(table.getColumn('medicineName')?.getFilterValue() as string) ?? ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => table.getColumn('medicineName')?.setFilterValue(e.target.value)}
-                className='font-secondary font-normal text-black px-10 ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green focus-visible:ring-offset-0 focus-visible:ring-0' />
-                <PackageSearchIcon className='text-deep-sage-green-700 absolute left-3 top-1/2 transform -translate-y-1/2 text-black' />
             </div>
+            <div className='flex flex-row mb-4 ml-4 items-center gap-2'>
+                <div className='relative min-w-xs'>
+                    <Input 
+                    placeholder='Filter by name...' 
+                    value={(table.getColumn('medicineName')?.getFilterValue() as string) ?? ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => table.getColumn('medicineName')?.setFilterValue(e.target.value)}
+                    className='font-secondary font-normal text-black px-10 ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green focus-visible:ring-offset-0 focus-visible:ring-0' />
+                    <PackageSearchIcon className='text-deep-sage-green-700 absolute left-3 top-1/2 transform -translate-y-1/2 text-black' />
+                </div>
+                <Button 
+                variant='outline' 
+                className='text-deep-sage-green-700 font-secondary hover:bg-deep-sage-green-100 hover:text-deep-sage-green-700'
+                onClick={() => setIsDialogOpen(!isDialogOpen)}>
+                    <PlusIcon />
+                    Add Medicine
+                </Button>
+                <AddMedicineDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
             </div>
             <div className='rounded-md border mx-4 mb-4'>
                 <Table>
@@ -113,16 +125,16 @@ const DataTable = <TData, TValue>({
             </div>
             <div className='flex items-center justify-end space-x-3 mx-4'>
                 <div className='flex gap-2'>
-                    <Button className='bg-deep-sage-green-700 font-secondary font-medium text-white group hover:bg-deep-sage-green hover:text-white' variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+                    <Button className='bg-deep-sage-green-700 font-secondary text-white group hover:bg-deep-sage-green hover:text-white' variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                     <ArrowLeftIcon className='text-white transition-all duration-300 group-hover:-translate-x-1' />
                     Previous
                 </Button>
-                <Button className='font-secondary text-sm text-black' variant='outline' size='sm'>
+                <Button className='font-secondary text-black' variant='outline' size='sm'>
                     <BookOpenIcon className='text-deep-sage-green-700' />
                     Page: 
                     <span className='text-black'>{table.getState().pagination.pageIndex + 1}</span>
                 </Button>
-                <Button className='bg-deep-sage-green-700 font-secondary font-medium text-white group hover:bg-deep-sage-green hover:text-white' variant='outline' size='sm' onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                <Button className='bg-deep-sage-green-700 font-secondary text-white group hover:bg-deep-sage-green hover:text-white' variant='outline' size='sm' onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                     Next
                     <ArrowRightIcon className='text-white transition-all duration-300 group-hover:translate-x-1' />
                 </Button>
