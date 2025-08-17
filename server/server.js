@@ -9,9 +9,11 @@ const port = 3000;
 app.use(cors ({
     origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    credentials: true,
 }));
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api', router);
 
 app.listen(port, () => {

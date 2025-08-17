@@ -1,8 +1,42 @@
 import inventoryService from '../services/inventory.service.js';
 
 class InventoryController {
-
+    async addItem(req, res) {
+        try {
+            const { medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived } = req.body;
+            const newItem = await inventoryService.addItem(medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived);
+            res.status(201).json({ message: 'Item added successfully', item: newItem });
+        }
+        catch (error) {
+            console.error('Error adding item:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            throw error;
+        }
+    }
+    async getAllItems(req, res) {
+        try {
+            const items = await inventoryService.getAllItems();
+            res.status(200).json(items);
+        }
+        catch (error) {
+            console.error('Error fetching all items:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            throw error;
+        }
+    }
+    async deleteItemById(req, res) {
+        try {
+            const { id } = req.params;
+            const deletedItem = await inventoryService.deleteItemById(id);
+            res.status(200).json({ message: 'Item deleted successfully', item: deletedItem });
+        }
+        catch (error) {
+            console.error('Error deleting item by ID:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            throw error;
+        }
+    }
 }
-// This is a placeholder for the InventoryController class.
+
 
 export default new InventoryController();

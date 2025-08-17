@@ -1,7 +1,7 @@
-import { pool } from './dbClient.js';
+import { pool } from '../dbClient.js';
 
 class InventoryDB {
-    async addItem({ name, category, quantity, pricePerUnit, costPerUnit, expiryDate, dateReceived }) {
+    async addItem( name, category, quantity, pricePerUnit, costPerUnit, expiryDate, dateReceived ) {
         try {
             const res = await pool.query(
                 'INSERT INTO inventory (name, category, quantity, price_per_unit, cost_per_unit, expiry_date, date_received) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
