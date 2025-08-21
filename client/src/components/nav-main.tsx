@@ -38,7 +38,7 @@ export const NavMain = ({
                         <SidebarMenuItem>
                             <CollapsibleTrigger asChild>
                                 <SidebarMenuButton tooltip={item.title}>
-                                    {item.icon && <item.icon style={{ height: 18, width: 18, color: '#2c503b' }} />}
+                                    {item.icon && <item.icon className='text-deep-sage-green-700' style={{ height: 18, width: 18 }} />}
                                     <span className='font-primary text-md font-medium text-black'> {item.title} </span>
                                     <ChevronRightIcon className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
                                 </SidebarMenuButton>

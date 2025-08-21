@@ -6,10 +6,16 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import type { loginFormType } from '@/types/loginType';
+import type { loginFormType } from '@/types/login.type';
+import { api } from '@/utils/axios.config';
+import { useNavigate } from 'react-router';
+import { useAuth } from '@/hooks/auth.hook';
+import type { User } from '@/types/user.type';
 
 const LoginPage = () => {
 
+    const { setIsAuthenticated, setUser } = useAuth();
+    const navigate = useNavigate();
     const loginForm = useForm<loginFormType>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -19,7 +25,22 @@ const LoginPage = () => {
     })
 
     const handleLogin = async (data: loginFormType) => {
-        console.log('Login data:', data);
+        try {
+            const res = await api.post<{
+                message: string;
+                user: User;
+            }>('/auth/login', {
+                userName: data.username,
+                password: data.password
+            });
+            setIsAuthenticated(true);
+            setUser(res.data.user);
+            navigate('/dashboard');
+            
+        }
+        catch (error) {
+            console.error('Login failed:', error);
+        }
     }
 
     return (
@@ -84,4 +105,3 @@ const LoginPage = () => {
 }
 
 export default LoginPage;
-// This is a simple login page component for a React application.

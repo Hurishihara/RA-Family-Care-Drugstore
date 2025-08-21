@@ -1,5 +1,5 @@
-import type { loginSchema } from "@/schemas/login.schema";
-import { z } from "zod";
+import type { loginSchema } from '@/schemas/login.schema';
+import { z } from 'zod';
 
 type loginFormType = z.infer<typeof loginSchema>;
 

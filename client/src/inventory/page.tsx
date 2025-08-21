@@ -1,9 +1,20 @@
 import * as React from 'react';
 import { type InventoryItem, inventoryColumns } from './columns';
 import DataTable from './data-table';
+import { useAuth } from '@/hooks/auth.hook';
+import { hasPermission } from '@/utils/permission';
 
 const CustomInventoryTablePage = () => {
     const [data, setData] = React.useState<InventoryItem[]>([]);
+    const { user } = useAuth();
+
+    const filteredInventoryColumns = inventoryColumns.filter(column => {
+      if (column.id === 'actions' && !hasPermission(user || { id: '1', name: 'Guest', role: 'Staff' }, 'view:inventoryActions')) {
+          return false;
+      }
+      return true;
+    })
+
     React.useEffect(() => {
         const getData = async (): Promise<InventoryItem[]> => {
             return [
@@ -232,7 +243,7 @@ const CustomInventoryTablePage = () => {
         getData().then(setData);
     }, [])
     return (
-        <DataTable columns={inventoryColumns} data={data} />
+        <DataTable columns={filteredInventoryColumns} data={data} />
     )
 }
 

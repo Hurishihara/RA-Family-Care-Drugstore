@@ -22,9 +22,8 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, PackageSearchIcon, PlusIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import AddMedicineDialog from './sub-components/add-medicine-dialog'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { medicineSchema, type medicineFormType } from '@/schemas/medicine.schema'
+import { useAuth } from '@/hooks/auth.hook'
+import { hasPermission } from '@/utils/permission'
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -38,8 +37,8 @@ const DataTable = <TData, TValue>({
     data,
 }: DataTableProps<TData, TValue>) => {
 
+    const { user } = useAuth()
     const [ isDialogOpen, setIsDialogOpen ] = React.useState(false) 
-
     const [ columnFilters, setColumnFilters ] = React.useState<ColumnFiltersState>([])
     const [ sorting, setSorting ] = React.useState<SortingState>([])
 
@@ -73,14 +72,18 @@ const DataTable = <TData, TValue>({
                     className='font-secondary font-normal text-black px-10 ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green focus-visible:ring-offset-0 focus-visible:ring-0' />
                     <PackageSearchIcon className='text-deep-sage-green-700 absolute left-3 top-1/2 transform -translate-y-1/2 text-black' />
                 </div>
-                <Button 
-                variant='outline' 
-                className='text-deep-sage-green-700 font-secondary hover:bg-deep-sage-green-100 hover:text-deep-sage-green-700'
-                onClick={() => setIsDialogOpen(!isDialogOpen)}>
-                    <PlusIcon />
-                    Add Medicine
-                </Button>
-                <AddMedicineDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+                {user && !hasPermission(user || { id: '1', name: 'Guest', role: 'Staff' }, 'create:inventory') ? null : (
+                    <>
+                        <Button 
+                        variant='outline' 
+                        className='text-deep-sage-green-700 font-secondary hover:bg-deep-sage-green-100 hover:text-deep-sage-green-700'
+                        onClick={() => setIsDialogOpen(!isDialogOpen)}>
+                            <PlusIcon />
+                            Add Medicine
+                        </Button>
+                        <AddMedicineDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+                    </>
+                )}
             </div>
             <div className='rounded-md border mx-4 mb-4'>
                 <Table>

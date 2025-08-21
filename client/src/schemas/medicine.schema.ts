@@ -30,4 +30,3 @@ export const medicineSchema = z.object({
     .max(new Date(), { message: "Date received cannot be in the future." })
 })
 
-export type medicineFormType = z.infer<typeof medicineSchema>;

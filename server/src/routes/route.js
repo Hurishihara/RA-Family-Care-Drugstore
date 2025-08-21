@@ -9,6 +9,4 @@ router.use('/inventory', inventoryRouter);
 router.use('/user', userRouter);
 router.use('/auth', authRouter);
 
-// This is a placeholder for the main router that combines all routes.
-
 export default router;

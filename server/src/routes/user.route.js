@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import userController from '../controllers/user.controller.js';
+import authValidation from '../middleware/auth.js';
 
 const userRouter = Router();
 
-userRouter.post('/add-user', userController.addUser);
-userRouter.delete('/delete-user/:id', userController.deleteUser);
-
-
-// This is a placeholder for the user routes.
+userRouter.get('/get-users', authValidation, userController.getUsers)
+userRouter.post('/add-user', authValidation, userController.addUser);
+userRouter.delete('/delete-user/:id', authValidation, userController.deleteUser);
 
 export default userRouter;
