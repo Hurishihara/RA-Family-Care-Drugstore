@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { type ColumnDef } from '@tanstack/react-table';
+import { formatDate } from 'date-fns';
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, MoreHorizontalIcon } from 'lucide-react';
 
 export type InventoryItem = {
@@ -82,14 +83,18 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
         accessorKey: 'expiryDate',
        header: () => <div className='font-primary font-semibold text-black'> Expiry Date </div>,
        cell: ({ row }) => {
-            return <div className='font-secondary font-normal text-black'> {row.getValue('expiryDate')} </div>
+            const expiryDate = row.getValue('expiryDate') as string;
+            const formattedDate = formatDate(new Date(expiryDate), 'MMMM dd, yyyy');
+            return <div className='font-secondary font-normal text-black'>{ formattedDate }</div>
         }
     },
     {
         accessorKey: 'dateReceived',
         header: () => <div className='font-primary font-semibold text-black'> Date Received </div>,
         cell: ({ row }) => {
-            return <div className='font-secondary font-normal text-black'> {row.getValue('dateReceived')} </div>
+            const expiryDate = row.getValue('dateReceived') as string;
+            const formattedDate = formatDate(new Date(expiryDate), 'MMMM dd, yyyy');
+            return <div className='font-secondary font-normal text-black'>{ formattedDate }</div>
         }
     },
     {
