@@ -14,7 +14,14 @@ class InventoryService {
     async getAllItems() {
         try {
             const items = await inventoryDB.getAllItems();
-            return items;
+            return items.map(item => ({
+                ...item,
+                medicineName: item.name,
+                pricePerUnit: parseFloat(item.price_per_unit),
+                costPerUnit: parseFloat(item.cost_per_unit),
+                expiryDate: item.expiry_date,
+                dateReceived: item.date_received
+            }))
         }
         catch (error) {
             console.error('Error fetching all items:', error);

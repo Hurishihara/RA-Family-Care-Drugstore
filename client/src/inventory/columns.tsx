@@ -1,22 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { type medicineType } from '@/types/medicine.type';
 import { type ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, MoreHorizontalIcon } from 'lucide-react';
 
-export type InventoryItem = {
-    id: string;
-    medicineName: string;
-    category: string;
-    quantity: number;
-    pricePerUnit: number;
-    costPerUnit: number;
-    expiryDate: string;
-    expirationDate: string;
-    dateReceived: string;
-}
-
-export const inventoryColumns: ColumnDef<InventoryItem>[] = [
+export const inventoryColumns: ColumnDef<medicineType>[] = [
     {
         accessorKey: 'medicineName',
         header: () => <div className='font-primary font-semibold text-black'> Medicine Name</div>,

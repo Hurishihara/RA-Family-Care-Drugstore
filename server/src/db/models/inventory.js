@@ -16,7 +16,7 @@ class InventoryDB {
     }
     async getAllItems() {
         try {
-            const res = await pool.query('SELECT NOW() as now');
+            const res = await pool.query('SELECT * FROM inventory');
             return res.rows;
         }
         catch (error) {
