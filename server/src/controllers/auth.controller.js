@@ -43,7 +43,6 @@ class AuthController {
     async getCurrentUser(req, res) {
         try {
             const currentUser = req.user;
-            console.log('Current user:', currentUser);
             if (!currentUser) {
                 return res.status(401).json({ error: 'Unauthorized' });
             }

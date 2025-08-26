@@ -6,7 +6,7 @@ const inventoryRouter = Router();
 
 inventoryRouter.post('/add-inventory', authValidation, inventoryController.addItem);
 inventoryRouter.delete('/delete-inventory/:id', authValidation, inventoryController.deleteItemById);
-//inventoryRouter.put('/update-inventory/:id', inventoryController.updateItemById);
+inventoryRouter.patch('/edit-inventory/:id', authValidation, inventoryController.updateItemById);
 inventoryRouter.get('/get-inventory', inventoryController.getAllItems);
 
 export default inventoryRouter;

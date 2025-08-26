@@ -1,3 +1,4 @@
+import user from '../db/models/user.js';
 import inventoryService from '../services/inventory.service.js';
 
 class InventoryController {
@@ -16,11 +17,25 @@ class InventoryController {
     async getAllItems(req, res) {
         try {
             const items = await inventoryService.getAllItems();
-            console.log(items);
             res.status(200).json(items);
         }
         catch (error) {
             console.error('Error fetching all items:', error);
+            res.status(500).json({ message: 'Internal server error' });
+            throw error;
+        }
+    }
+    async updateItemById(req, res) {
+        try {
+            const { id } = req.params;
+            const { fields } = req.body;
+            const updatedItem = await inventoryService.updateItemById(id, fields);
+            console.log('Fields to update:', fields);
+            console.log('Updated Item:', updatedItem);
+            res.status(200).json(updatedItem);
+        }
+        catch (error) {
+            console.error('Error updating item by ID:', error);
             res.status(500).json({ message: 'Internal server error' });
             throw error;
         }

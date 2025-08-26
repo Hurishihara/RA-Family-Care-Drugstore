@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { medicineSchema} from '@/schemas/medicine.schema'
-import { type medicineFormType } from '@/types/medicine.type'
+import type { medicineFormType, medicineType } from '@/types/medicine.type'
 import { api } from '@/utils/axios.config'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
@@ -15,41 +15,56 @@ import { CalendarIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon 
 import React from 'react'
 import { useForm } from 'react-hook-form'
 
-
-type AddMedicineDialogProps = {
+type EditMedicineDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    medicineItem: medicineType | undefined;
 }
 
-const AddMedicineDialog = React.memo(({
+const EditMedicineDialog = React.memo(({
     open,
     onOpenChange,
-}: AddMedicineDialogProps) => {
+    medicineItem
+}: EditMedicineDialogProps) => {
 
     const medicineForm = useForm<medicineFormType>({
         resolver: zodResolver(medicineSchema),
-        defaultValues: {
+        defaultValues: medicineItem || {
             medicineName: '',
             category: '',
+            quantity: 0,
             pricePerUnit: 0,
             costPerUnit: 0,
-            quantity: 0,
             expirationDate: new Date(),
             dateReceived: new Date()
-        },
-
-        shouldUnregister: true,
-        mode: 'onSubmit'
+        }
     });
-   
-    const handleSubmitMedicine = async (data: medicineFormType) => {
+
+    const handleEditMedicine = async (value: medicineFormType) => {
         try {
-            await api.post('inventory/add-inventory', data);
-            medicineForm.reset();
+            const { data } = await api.patch<medicineFormType>(`/inventory/edit-inventory/${medicineItem?.id}`, {
+                fields: {
+                    name: value.medicineName,
+                    category: value.category,
+                    quantity: value.quantity,
+                    pricePerUnit: value.pricePerUnit,
+                    costPerUnit: value.costPerUnit,
+                    expirationDate: value.expirationDate,
+                    dateReceived: value.dateReceived
+                }
+                
+            })
+            medicineForm.setValue('medicineName', data.medicineName);
+            medicineForm.setValue('category', data.category);
+            medicineForm.setValue('quantity', data.quantity);
+            medicineForm.setValue('pricePerUnit', data.pricePerUnit);
+            medicineForm.setValue('costPerUnit', data.costPerUnit);
+            medicineForm.setValue('expirationDate', new Date(data.expirationDate));
+            medicineForm.setValue('dateReceived', new Date(data.dateReceived));
             return;
         }
         catch (error) {
-            console.error('Error submitting medicine:', error);
+            console.error('Error editing medicine:', error);
         }
     }
 
@@ -59,18 +74,18 @@ const AddMedicineDialog = React.memo(({
                 <DialogHeader>
                     <DialogTitle 
                     className='font-primary font-semibold text-xl text-black'>
-                        Add Medicine
+                        Edit Medicine
                     </DialogTitle>
                     <DialogDescription 
                     className='font-primary font-normal text-xs text-black'>
-                        Fill out the form below to add a new medicine to your inventory.
+                        Update the details of the selected medicine in your inventory.
                     </DialogDescription>
                 </DialogHeader>
                 <Separator className='my-5' />
                 <Form {...medicineForm}>
                     <form
                     id='add-medicine-form'
-                    onSubmit={medicineForm.handleSubmit(handleSubmitMedicine)}>
+                    onSubmit={medicineForm.handleSubmit(handleEditMedicine)}>
                         <div className='grid grid-cols-12 gap-3 font-secondary '>
                             <div className='col-span-6 mb-5'>
                                 <FormField
@@ -289,7 +304,7 @@ const AddMedicineDialog = React.memo(({
                                 Cancel
                             </Button>
                             <Button type='submit' form='add-medicine-form' className='bg-deep-sage-green-700 text-white hover:bg-deep-sage-green-600 cursor-pointer'>
-                                Add Medicine
+                                Edit Medicine
                             </Button>
                         </DialogFooter>
                     </form>
@@ -297,6 +312,6 @@ const AddMedicineDialog = React.memo(({
             </DialogContent>
         </Dialog>
     )
-});
+})
 
-export default AddMedicineDialog
+export default EditMedicineDialog

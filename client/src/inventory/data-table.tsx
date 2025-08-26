@@ -21,9 +21,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { ArrowLeftIcon, ArrowRightIcon, BookOpenIcon, PackageSearchIcon, PlusIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import AddMedicineDialog from './sub-components/add-medicine-dialog'
 import { useAuth } from '@/hooks/auth.hook'
 import { hasPermission } from '@/utils/permission'
+import AddMedicineDialog from './sub-components/add-medicine-dialog'
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -76,12 +76,12 @@ const DataTable = <TData, TValue>({
                     <>
                         <Button 
                         variant='outline' 
-                        className='text-deep-sage-green-700 font-secondary hover:bg-deep-sage-green-100 hover:text-deep-sage-green-700'
+                        className='text-deep-sage-green-700 font-secondary hover:bg-deep-sage-green-100 hover:text-deep-sage-green-700 cursor-pointer'
                         onClick={() => setIsDialogOpen(!isDialogOpen)}>
                             <PlusIcon />
                             Add Medicine
                         </Button>
-                        <AddMedicineDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+                        {isDialogOpen ? <AddMedicineDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} /> : null}
                     </>
                 )}
             </div>

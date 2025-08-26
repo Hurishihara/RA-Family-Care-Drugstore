@@ -21,12 +21,7 @@ export const medicineSchema = z.object({
     .nonnegative({ message: "Cost per unit must be a non-negative number." })
     .min(1, { message: "Cost per unit must be at least 1." }),
 
-    expirationDate: z.date()
-    .min(new Date(), { message: "Expiration date must be in the future." })
-    .max(new Date(new Date().setFullYear(new Date().getFullYear() + 5)), { message: "Expiration date cannot be more than 5 years in the future." }),
-
+    expirationDate: z.date(),
     dateReceived: z.date()
-    .min(new Date(new Date().setFullYear(new Date().getFullYear() - 5)), { message: "Date received cannot be older than 5 years." })
-    .max(new Date(), { message: "Date received cannot be in the future." })
 })
 

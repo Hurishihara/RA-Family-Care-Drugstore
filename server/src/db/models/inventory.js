@@ -24,6 +24,30 @@ class InventoryDB {
             throw error;
         }
     }
+
+    async updateItemById(id, fields) {
+        try {
+            const { name, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived } = fields;
+            const res = await pool.query(
+                `UPDATE inventory SET
+                    name = COALESCE($1, name),
+                    category = COALESCE($2, category),
+                    quantity = COALESCE($3, quantity),
+                    price_per_unit = COALESCE($4, price_per_unit),
+                    cost_per_unit = COALESCE($5, cost_per_unit),
+                    expiry_date = COALESCE($6, expiry_date),
+                    date_received = COALESCE($7, date_received)
+                 WHERE id = $8 RETURNING *`,
+                 [name, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived, id]
+            )
+            return res.rows[0];
+        }
+        catch (error) {
+            console.error('Error updating item by ID:', error);
+            throw error;
+        }
+    }
+
     async deleteItemById(id) {
         try {
             const res = await pool.query('DELETE FROM inventory WHERE id = $1 RETURNING *',

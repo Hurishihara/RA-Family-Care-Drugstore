@@ -15,16 +15,37 @@ class InventoryService {
         try {
             const items = await inventoryDB.getAllItems();
             return items.map(item => ({
-                ...item,
+                id: item.id,
                 medicineName: item.name,
+                category: item.category,
+                quantity: item.quantity,
                 pricePerUnit: parseFloat(item.price_per_unit),
                 costPerUnit: parseFloat(item.cost_per_unit),
-                expiryDate: item.expiry_date,
+                expirationDate: item.expiry_date,
                 dateReceived: item.date_received
             }))
         }
         catch (error) {
             console.error('Error fetching all items:', error);
+            throw error;
+        }
+    }
+    async updateItemById(id, fields) {
+        try {
+            const updatedItem = await inventoryDB.updateItemById(id, fields);
+            return {
+                id: updatedItem.id,
+                medicineName: updatedItem.name,
+                category: updatedItem.category,
+                quantity: updatedItem.quantity,
+                pricePerUnit: parseFloat(updatedItem.price_per_unit),
+                costPerUnit: parseFloat(updatedItem.cost_per_unit),
+                expirationDate: updatedItem.expiry_date,
+                dateReceived: updatedItem.date_received
+            }
+        }
+        catch (error) {
+            console.error('Error updating item by ID:', error);
             throw error;
         }
     }
