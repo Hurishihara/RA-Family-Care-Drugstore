@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { inventoryColumns } from './columns';
-import DataTable from './data-table';
+import { inventoryColumns } from '../inventory/columns';
+import DataTable from '../inventory/data-table';
 import { useAuth } from '@/hooks/auth.hook';
 import { hasPermission } from '@/utils/permission';
 import { api } from '@/utils/axios.config';
 import type { medicineType } from '@/types/medicine.type';
 
 const CustomInventoryTablePage = () => {
-    const [data, setData] = React.useState<medicineType[]>([]);
+    const [ data, setData ] = React.useState<medicineType[]>([]);
     const { user } = useAuth();
 
     const filteredInventoryColumns = inventoryColumns.filter(column => {

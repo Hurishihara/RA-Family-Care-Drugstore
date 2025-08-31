@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/auth.hook"
+import CustomSidebar from "@/components/CustomSidebar";
 import { Navigate, Outlet } from "react-router";
 
 const Private = () => {
@@ -9,7 +10,11 @@ const Private = () => {
     }
 
     return isAuthenticated ? (
-        <Outlet />
+        <>
+            <CustomSidebar>
+                <Outlet />    
+            </CustomSidebar>
+        </>
     ) : <Navigate to='/login' />
 }
 

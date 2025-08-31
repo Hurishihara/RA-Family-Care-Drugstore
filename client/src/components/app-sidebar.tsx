@@ -26,12 +26,12 @@ const data = {
             items: [
                 {
                     title: 'Inventory',
-                    url: '#',
+                    url: '/inventory',
                     icon: PillIcon,
                 },
                 {
-                    title: 'Sales',
-                    url: '#',
+                    title: 'Orders',
+                    url: 'orders',
                     icon: ReceiptIcon,
                 }
             ]
@@ -44,7 +44,7 @@ const data = {
             permissions: 'view:users' as Permission,
             items: [
                 {
-                    title: 'Users List',
+                    title: 'Users',
                     url: '#',
                     icon: UsersIcon,
                 },

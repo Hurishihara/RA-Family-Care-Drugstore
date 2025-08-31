@@ -1,11 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import LoginPage from './pages/LoginPage.tsx'
-import Dashboard from './pages/dashboard/Dashboard.tsx'
+import LoginPage from './pages/login-page.tsx'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { AuthProvider } from './contexts/auth.context.tsx'
 import Private from './layouts/Private.tsx'
+import CustomInventoryTablePage from './pages/inventory-page.tsx'
+import CustomOrdersTablePage from './pages/orders-page.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,7 +15,8 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path='/login' element={<LoginPage />} />
         <Route element={<Private />}>
-          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/inventory' element={<CustomInventoryTablePage />} />
+          <Route path='/orders' element={<CustomOrdersTablePage />} />
         </Route>
       </Routes>
       </AuthProvider>
