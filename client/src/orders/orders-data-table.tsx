@@ -77,7 +77,7 @@ const OrderDataTable = <TData, TValue>({
                             <TableRow key={headerGroup.id} className='p-10'>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead className='font-bold text-muted-foreground' key={header.id}>
+                                        <TableHead className='font-primary font-bold text-muted-foreground' key={header.id}>
                                             {header.isPlaceholder ? null : flexRender(
                                                 header.column.columnDef.header,
                                                 header.getContext()

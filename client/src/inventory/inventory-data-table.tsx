@@ -9,6 +9,7 @@ import {
     useReactTable,
     getSortedRowModel,
     getFilteredRowModel,
+    type PaginationState,
 } from '@tanstack/react-table'
 import {
     Table,
@@ -41,6 +42,10 @@ const DataTable = <TData, TValue>({
     const [ isDialogOpen, setIsDialogOpen ] = React.useState(false) 
     const [ columnFilters, setColumnFilters ] = React.useState<ColumnFiltersState>([])
     const [ sorting, setSorting ] = React.useState<SortingState>([])
+    const [ pagination, setPagination ] = React.useState<PaginationState>({
+        pageIndex: 0,
+        pageSize: 15,
+    })
 
     const table = useReactTable({
         data,
@@ -51,17 +56,19 @@ const DataTable = <TData, TValue>({
         onColumnFiltersChange: setColumnFilters,
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
+        onPaginationChange: setPagination,
         state: {
             columnFilters,
             sorting,
+            pagination,
         }
     })
     
     return (
         <>
             <div className='flex flex-col items-left m-4 gap-2'>
-                <h1 className='font-primary font-semibold text-2xl text-black'>Inventory Summary</h1>
-                <h1 className='font-primary font-normal text-xs text-black'>View and manage all medications in your pharmacy stock</h1>
+                <h1 className='font-primary font-semibold text-2xl text-deep-sage-green-800'>Inventory Summary</h1>
+                <h1 className='font-primary font-normal text-xs text-muted-foreground'>View and manage all medications in your pharmacy stock</h1>
             </div>
             <div className='flex flex-row mb-4 ml-4 items-center gap-2'>
                 <div className='relative min-w-xs'>
@@ -76,7 +83,7 @@ const DataTable = <TData, TValue>({
                     <>
                         <Button 
                         variant='outline' 
-                        className='text-deep-sage-green-700 font-secondary hover:bg-deep-sage-green-100 hover:text-deep-sage-green-700 cursor-pointer'
+                        className='bg-deep-sage-green-800 text-white hover:bg-deep-sage-green-600 hover:text-white cursor-pointer'
                         onClick={() => setIsDialogOpen(!isDialogOpen)}>
                             <PlusIcon />
                             Add Medicine
@@ -92,7 +99,7 @@ const DataTable = <TData, TValue>({
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead className='bg-deep-sage-green-50' key={header.id}>
+                                        <TableHead className='font-primary font-bold text-muted-foreground' key={header.id}>
                                             {header.isPlaceholder
                                             ? null 
                                             : flexRender(
@@ -105,17 +112,24 @@ const DataTable = <TData, TValue>({
                             </TableRow>
                         ))}
                     </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                    <TableBody className='max-h-[300px]'>
+                        {table.getPaginationRowModel().rows?.length ? (
+                            <>
+                            {table.getPaginationRowModel().rows.map((row) => (
+                                <TableRow className='font-secondary hover:bg-deep-sage-green-50' key={row.id} data-state={row.getIsSelected() && 'selected'}>
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell  key={cell.id}>
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
                                 </TableRow>
-                            ))
+                            ))}
+                            {Array.from({ length: pagination.pageSize - table.getPaginationRowModel().rows.length}).map((_, index) => (
+                                <TableRow key={`empty-row-${index}`}>
+                                    <TableCell className='h-10.5' colSpan={columns.length} />
+                                </TableRow>
+                            ))}
+                            </>
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className='h-24 text-center'>
@@ -126,7 +140,7 @@ const DataTable = <TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className='flex items-center justify-end space-x-3 mx-4'>
+            <div className='flex items-center justify-end space-x-3 mx-4 mb-15'>
                 <div className='flex gap-2'>
                     <Button className='bg-deep-sage-green-700 font-secondary text-white group hover:bg-deep-sage-green hover:text-white' variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                     <ArrowLeftIcon className='text-white transition-all duration-300 group-hover:-translate-x-1' />

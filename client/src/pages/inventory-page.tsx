@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { inventoryColumns } from '../inventory/columns';
-import DataTable from '../inventory/data-table';
+import { inventoryColumns } from '../inventory/inventory-columns';
+import DataTable from '../inventory/inventory-data-table';
 import { useAuth } from '@/hooks/auth.hook';
 import { hasPermission } from '@/utils/permission';
 import { api } from '@/utils/axios.config';

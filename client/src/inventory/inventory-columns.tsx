@@ -3,33 +3,30 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { type medicineFormType, type medicineType } from '@/types/medicine.type';
 import { type ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, MoreHorizontalIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, CalendarCheck2Icon, ChevronsUpDownIcon, HashIcon, MoreVerticalIcon, PhilippinePesoIcon, Pill, TagIcon } from 'lucide-react';
 import React from 'react';
 import EditMedicineDialog from './sub-components/edit-medicine-dialog';
 
 export const inventoryColumns: ColumnDef<medicineType>[] = [
     {
         accessorKey: 'medicineName',
-        header: () => <div className='font-primary font-semibold text-black'> Medicine Name</div>,
+        header: () => <div className='flex flex-row gap-1 items-center'>
+            <Pill className='h-4 w-4' />
+            <h2>Medicine Name</h2>
+        </div>,
         cell: ({ row }) => {
-            return <div className='font-secondary font-normal text-black'> {row.getValue('medicineName')} </div>
+            return <div className='font-secondary font-bold text-deep-sage-green-800'> {row.getValue('medicineName')} </div>
         }
         
-    },
-    {
-        accessorKey: 'category',
-        header: () => <div className='font-primary font-semibold text-black'> Category </div>,
-        cell: ({ row }) => {
-            return <div className='font-secondary font-normal text-black'> {row.getValue('category')} </div>
-        }
     },
     {
         accessorKey: 'quantity',
         header: ({ column }) => (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant='ghost' size='sm' className='hover:bg-deep-sage-green-100 cursor-pointer '>
-                        <span className='font-secondary font-semibold text-black'> Quantity </span>
+                    <Button variant='ghost' size='sm' className='font-primary font-bold hover:bg-deep-sage-green-100 hover:text-deep-sage-green-800 cursor-pointer '>
+                        <HashIcon className='h-4 w-4' />
+                        <span> Quantity </span>
                         {column.getIsSorted() === 'desc' ? (
                             <ArrowDownIcon />
                         ) : column.getIsSorted() === 'asc' ? (
@@ -39,53 +36,77 @@ export const inventoryColumns: ColumnDef<medicineType>[] = [
                         )}
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='start' className='font-secondary font-medium text-black'>
+                <DropdownMenuContent align='center' className='font-primary font-medium text-deep-sage-green-800'>
                     <DropdownMenuItem className='cursor-pointer' onClick={() => column.toggleSorting(false)}>
-                        <ArrowUpIcon className='text-deep-sage-green-700' />
+                        <ArrowUpIcon  className='h-4 w-4 text-muted-foreground'/>
                         Asc
                     </DropdownMenuItem>
                     <DropdownMenuItem className='cursor-pointer' onClick={() => column.toggleSorting(true)}>
-                        <ArrowDownIcon className='text-deep-sage-green-700' />
+                        <ArrowDownIcon className='h-4 w-4 text-muted-foreground'/>
                         Desc
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         ),
         cell: ({ row }) => {
-            return <div className='font-secondary font-normal text-black ml-7'> {row.getValue('quantity')} </div>
+            return <div className='font-secondary font-bold text-deep-sage-green-800 text-center w-30'> {row.getValue('quantity')} </div>
+        }
+    },
+    {
+        accessorKey: 'category',
+        header: () => <div className='flex flex-row gap-1 items-center'>
+            <TagIcon className='h-4 w-4' />
+            <h2>Category</h2>
+        </div>,
+        cell: ({ row }) => {
+            return <div className='font-medium text-muted-foreground'> {row.getValue('category')} </div>
         }
     },
     {
         accessorKey: 'pricePerUnit',
-        header: () => <div className='font-primary font-semibold text-black'> Price per Unit </div>,
+        header: () => <div className='flex flex-row gap-1 items-center'>
+            <PhilippinePesoIcon className='h-4 w-4' />
+            <h2>Price per Unit</h2>
+        </div>,
         cell: ({ row }) => {
-            return <div className='font-secondary font-normal text-black'> {row.getValue('pricePerUnit')} </div>
+            const pricePerUnit = row.getValue('pricePerUnit') as medicineType['pricePerUnit'];
+            return <div className='font-medium text-muted-foreground text-center w-29'> ₱{pricePerUnit.toFixed(2)} </div>
         }
     },
     {
         accessorKey: 'costPerUnit',
-        header: () => <div className='font-primary font-semibold text-black'> Cost per Unit </div>,
+        header: () => <div className='flex flex-row gap-1 items-center'>
+            <PhilippinePesoIcon className='h-4 w-4' />
+            <h2>Cost per Unit</h2>
+        </div>,
         cell: ({ row }) => {
-            return <div className='font-secondary font-normal'> {row.getValue('costPerUnit')} </div>
+            const costPerUnit = row.getValue('costPerUnit') as medicineType['costPerUnit'];
+            return <div className='font-medium text-muted-foreground text-center w-28'> ₱{costPerUnit.toFixed(2)} </div>
         }
 
     },
     {
         accessorKey: 'expirationDate',
-       header: () => <div className='font-primary font-semibold text-black'> Expiry Date </div>,
+       header: () => <div className='flex flex-row gap-1 items-center'>
+            <CalendarCheck2Icon className='h-4 w-4' />
+            <h2> Expiration Date </h2>
+       </div>,
        cell: ({ row }) => {
             const expiryDate = row.getValue('expirationDate') as string;
-            const formattedDate = formatDate(new Date(expiryDate), 'MMMM dd, yyyy');
-            return <div className='font-secondary font-normal text-black'>{ formattedDate }</div>
+            const formattedDate = formatDate(new Date(expiryDate), 'dd MMM, yyyy');
+            return <div className='font-medium text-muted-foreground w-32 text-center'>{ formattedDate }</div>
         }
     },
     {
         accessorKey: 'dateReceived',
-        header: () => <div className='font-primary font-semibold text-black'> Date Received </div>,
+        header: () => <div className='flex flex-row gap-1 items-center'>
+            <CalendarCheck2Icon className='h-4 w-4' />
+            <h2> Date Received </h2>
+        </div>,
         cell: ({ row }) => {
             const expiryDate = row.getValue('dateReceived') as string;
-            const formattedDate = formatDate(new Date(expiryDate), 'MMMM dd, yyyy');
-            return <div className='font-secondary font-normal text-black'>{ formattedDate }</div>
+            const formattedDate = formatDate(new Date(expiryDate), 'dd MMM, yyyy');
+            return <div className='font-medium text-muted-foreground w-32 text-center'>{ formattedDate }</div>
         }
     },
     {
@@ -114,16 +135,16 @@ export const inventoryColumns: ColumnDef<medicineType>[] = [
                         <DropdownMenuTrigger asChild>
                             <Button variant='ghost' className='h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer'>
                                 <span className='sr-only'>Open menu</span>
-                                <MoreHorizontalIcon className='h-4 w-4' />
+                                <MoreVerticalIcon className='h-4 w-4 text-muted-foreground' />
                             </Button> 
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end'>
                             <DropdownMenuLabel className='font-primary font-semibold'>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem className='cursor-pointer' onClick={handleEdit}>
+                            <DropdownMenuItem className='cursor-pointer font-primary font-medium text-muted-foreground' onClick={handleEdit}>
                                 Edit
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className='cursor-pointer' >Delete</DropdownMenuItem>
+                            <DropdownMenuItem className='cursor-pointer font-primary font-medium text-muted-foreground' >Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     {selectedMedicine ? (
