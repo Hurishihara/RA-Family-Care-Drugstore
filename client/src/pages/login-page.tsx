@@ -35,7 +35,7 @@ const LoginPage = () => {
             });
             setIsAuthenticated(true);
             setUser(res.data.user);
-            navigate('/dashboard');
+            navigate('/inventory');
             
         }
         catch (error) {
