@@ -42,6 +42,15 @@ class OrderDB {
             throw err;
         }
     }
+    async getOrderByTimeframe(startDate) {
+        try {
+            const res = await pool.query('SELECT * FROM orders WHERE order_date >= $1 ORDER BY order_date ASC', [startDate]);
+            return res.rows;
+        }
+        catch (err) {
+            console.error('Error fetching orders by timeframe:', err);
+        }
+    }
 }
 
 export default new OrderDB();

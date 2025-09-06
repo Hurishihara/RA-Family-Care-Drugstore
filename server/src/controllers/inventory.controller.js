@@ -27,6 +27,10 @@ class InventoryController {
     }
     async updateItemById(req, res) {
         try {
+            const currentUser = req.user;
+            if (!currentUser || currentUser.role !== 'Admin') {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
             const { id } = req.params;
             const { fields } = req.body;
             const updatedItem = await inventoryService.updateItemById(id, fields);
@@ -42,6 +46,10 @@ class InventoryController {
     }
     async deleteItemById(req, res) {
         try {
+            const currentUser = req.user;
+            if (!currentUser || currentUser.role !== 'Admin') {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
             const { id } = req.params;
             const deletedItem = await inventoryService.deleteItemById(id);
             res.status(200).json({ message: 'Item deleted successfully', item: deletedItem });

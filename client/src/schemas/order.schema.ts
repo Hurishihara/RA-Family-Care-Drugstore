@@ -19,14 +19,6 @@ export const orderSchema = z.object({
             .min(1, { message: 'Price per unit must be at least 1.' }),
 
         })),
-
-    total: z.number()
-    .int({ message: 'Amount must be a number.' })
-    .nonnegative({ message: 'Amount must be a non-negative number.' })
-    .min(1, { message: 'Amount must be at least 1.' }),
-
     paymentMethod: z.enum(['GCash', 'Cash'], { message: 'Payment method must be either GCash or Cash.' }),
-
-    orderRepresentative: z.string()
 })
 

@@ -1,14 +1,15 @@
-import { type Order } from '@/types/order.type';
+import { type OrderWithTotalAndOrderRep } from '@/types/order.type';
 import { type ColumnDef } from '@tanstack/react-table';
-import { CalendarCheck2Icon, CreditCardIcon, HashIcon, LayersIcon, ScrollIcon, TrashIcon, UserCheckIcon, ViewIcon } from 'lucide-react';
+import { CalendarCheck2Icon, CreditCardIcon, HashIcon, LayersIcon, ScrollIcon, Trash2Icon, UserCheckIcon, ViewIcon } from 'lucide-react';
 import gcashlogo from '../assets/GCash-Logo.png'
 import { formatDate } from 'date-fns';
 import React from 'react';
 import ViewOrderSheet from './sub-components/view-order-sheet';
 import { useAuth } from '@/hooks/auth.hook';
 import { hasPermission } from '@/utils/permission';
+import { api } from '@/utils/axios.config';
 
-export const orderColumns: ColumnDef<Order>[] = [
+export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
     {
         accessorKey: 'orderId',
         header: () => <div className='flex flex-row gap-1 items-center'>
@@ -20,8 +21,11 @@ export const orderColumns: ColumnDef<Order>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-                return <div className='font-bold text-deep-sage-green-800'> {row.getValue('orderId')} </div>
-            }
+            const orderId = row.getValue('orderId') as OrderWithTotalAndOrderRep['orderId'];
+            return <div className='font-bold text-deep-sage-green-800'>
+                {`ORD-${orderId.toString().padStart(3, '0')}`}
+            </div>
+        }
     },
     {
         accessorKey: 'customer',
@@ -48,7 +52,7 @@ export const orderColumns: ColumnDef<Order>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-            const total = row.getValue('total') as Order['total'];
+            const total = row.getValue('total') as OrderWithTotalAndOrderRep['total'];
             return (
                 <div className='font-medium text-muted-foreground'>
                     ₱{total.toFixed(2)}
@@ -68,7 +72,7 @@ export const orderColumns: ColumnDef<Order>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-            const items = row.getValue('items') as Order['items'];
+            const items = row.getValue('items') as OrderWithTotalAndOrderRep['items']
             const itemCount = Object.keys(items).length;
             return (
                 <div className='font-medium text-muted-foreground'>
@@ -88,7 +92,7 @@ export const orderColumns: ColumnDef<Order>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-            const date = row.getValue('date') as Date;
+            const date = row.getValue('date') as OrderWithTotalAndOrderRep['date'];
             return <div className='font-medium text-muted-foreground'> { formatDate(date, 'dd MMM yyyy, hh:mm a') } </div>
         }
     },
@@ -103,7 +107,7 @@ export const orderColumns: ColumnDef<Order>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-            const paymentMethod = row.getValue('paymentMethod') as Order['paymentMethod'];
+            const paymentMethod = row.getValue('paymentMethod') as OrderWithTotalAndOrderRep['paymentMethod'];
             return (
                 <div className='flex flex-row items-center gap-1 font-medium text-muted-foreground'>
                     {paymentMethod === 'GCash' ? 
@@ -124,7 +128,8 @@ export const orderColumns: ColumnDef<Order>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-            return <div className='font-medium text-muted-foreground'> {row.getValue('orderRepresentative')} </div>
+            const orderRepresentative = row.getValue('orderRepresentative') as OrderWithTotalAndOrderRep['orderRepresentative']
+            return <div className='font-medium text-muted-foreground'>  {orderRepresentative} </div>
         }
     },
     {
@@ -134,9 +139,14 @@ export const orderColumns: ColumnDef<Order>[] = [
             const [ isViewOrderSheetOpen, setIsViewOrderSheetOpen ] = React.useState(false);
             const { user } = useAuth();
             
-            const handleDelete = () => {
-                // Implement delete functionality here
-                alert(`Delete order with ID: ${order.orderId}`); // Placeholder action
+            const handleDelete = async () => {
+                try {
+                    await api.delete(`/order/delete-order/${order.orderId}`);
+                    window.location.reload();
+                }
+                catch (err) {
+                    console.error('Error deleting order:', err);
+                }
             }
 
             return (
@@ -148,7 +158,7 @@ export const orderColumns: ColumnDef<Order>[] = [
                         </div>
                         {!hasPermission(user || { id: '1', name: 'Guest', role: 'Staff' }, 'delete:sales') ? null : (
                             <div>
-                                <TrashIcon role='button' onClick={handleDelete} className='text-muted-foreground h-4.5 cursor-pointer'/>
+                                <Trash2Icon role='button' onClick={handleDelete} className='text-muted-foreground h-4.5 cursor-pointer'/>
                             </div>
                         )}
                     </div>

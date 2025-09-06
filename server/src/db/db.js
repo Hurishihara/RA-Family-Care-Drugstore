@@ -59,7 +59,7 @@ class Database {
                     customer_name VARCHAR(100) NOT NULL,
                     total DECIMAL(10, 2) NOT NULL,
                     items JSONB NOT NULL,
-                    order_date DATE NOT NULL,
+                    order_date TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                     payment_method payment_type NOT NULL,
                     order_representative VARCHAR(100) NOT NULL
                     );`

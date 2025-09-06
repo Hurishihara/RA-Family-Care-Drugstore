@@ -1,14 +1,14 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { type Order } from '@/types/order.type';
+import { type OrderWithTotalAndOrderRep } from '@/types/order.type';
 import { formatDate } from 'date-fns';
 
 
 type ViewOrderSheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    order: Order;
+    order: OrderWithTotalAndOrderRep
 }
 
 const ViewOrderSheet = ({
@@ -21,7 +21,7 @@ const ViewOrderSheet = ({
             <SheetContent className='min-w-[450px]'>
                 <SheetHeader className='border-b-2 border-deep-sage-green-100'>
                     <SheetTitle className='font-primary text-deep-sage-green-800 font-bold text-xl'>
-                        #{order.orderId}
+                        #{`ORD-${order.orderId.toString().padStart(3, '0')}`}
                     </SheetTitle>
                     <SheetDescription className='font-primary font-medium text-xs max-w-[200px]'>
                         Order details
@@ -102,7 +102,7 @@ const ViewOrderSheet = ({
                     <h2 className='font-primary text-sm font-medium text-muted-foreground'>
                         Total:
                     </h2>
-                    <h2 className='font-primary text-sm font-bold text-deep-sage-green-800'>
+                    <h2 className='font-primary text-xl font-bold text-deep-sage-green-800'>
                         ₱{order.total.toFixed(2)}
                     </h2>
                 </div>

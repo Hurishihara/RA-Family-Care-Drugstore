@@ -7,4 +7,10 @@ type Order = OrderFormType & {
     orderId: string;
 }
 
-export type { OrderFormType, Order };
+type OrderWithTotalAndOrderRep = Order & {
+    total: number;
+    orderRepresentative: string;
+}
+
+
+export type { OrderFormType, Order, OrderWithTotalAndOrderRep };

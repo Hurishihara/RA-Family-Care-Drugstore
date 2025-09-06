@@ -4,7 +4,15 @@ class OrderService {
     async getOrders() {
         try {
             const orders = await orderDB.getOrders();
-            return orders;
+            return orders.map(order => ({
+                orderId: order.id,
+                customer: order.customer_name,
+                total: Number(order.total),
+                items: order.items,
+                date: order.order_date,
+                paymentMethod: order.payment_method,
+                orderRepresentative: order.order_representative
+            }))
         }
         catch (err) {
             console.error('Error fetching orders:', err);

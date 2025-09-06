@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { type medicineFormType, type medicineType } from '@/types/medicine.type';
 import { type ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
-import { ArrowDownIcon, ArrowUpIcon, CalendarCheck2Icon, ChevronsUpDownIcon, HashIcon, MoreVerticalIcon, PhilippinePesoIcon, Pill, TagIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, CalendarCheck2Icon, ChevronsUpDownIcon, HashIcon, PhilippinePesoIcon, Pill, SquarePenIcon, TagIcon, Trash2Icon } from 'lucide-react';
 import React from 'react';
 import EditMedicineDialog from './sub-components/edit-medicine-dialog';
+import { api } from '@/utils/axios.config';
 
 export const inventoryColumns: ColumnDef<medicineType>[] = [
     {
@@ -115,6 +116,7 @@ export const inventoryColumns: ColumnDef<medicineType>[] = [
             const [ selectedMedicine, setSelectedMedicine ] = React.useState<medicineFormType & { id: string } | undefined>(undefined);
             const [ isDialogOpen, setIsDialogOpen ] = React.useState(false);
             const medicine = row.original;
+            
             const handleEdit = () => {
                 setSelectedMedicine({
                     id: medicine['id'],
@@ -129,24 +131,21 @@ export const inventoryColumns: ColumnDef<medicineType>[] = [
                 setIsDialogOpen(!isDialogOpen);
             }
 
+            const handleDelete = async () => {
+                try {
+                    await api.delete(`/inventory/delete-inventory/${medicine.id}`);
+                }
+                catch (err) {
+                    console.log(err);
+                }
+            }
+
             return (
                 <>
-                    <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' className='h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer'>
-                                <span className='sr-only'>Open menu</span>
-                                <MoreVerticalIcon className='h-4 w-4 text-muted-foreground' />
-                            </Button> 
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                            <DropdownMenuLabel className='font-primary font-semibold'>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem className='cursor-pointer font-primary font-medium text-muted-foreground' onClick={handleEdit}>
-                                Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className='cursor-pointer font-primary font-medium text-muted-foreground' >Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className='flex flex-row items-center gap-2'>
+                        <SquarePenIcon role='button' className='text-muted-foreground h-4.5 cursor-pointer' onClick={handleEdit}/>
+                        <Trash2Icon role='button' className='text-muted-foreground h-4.5 cursor-pointer' onClick={handleDelete}/>
+                    </div>
                     {selectedMedicine ? (
                         <EditMedicineDialog
                             open={isDialogOpen}

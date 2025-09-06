@@ -11,7 +11,9 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHe
 import { useAuth } from '@/hooks/auth.hook';
 import { cn } from '@/lib/utils';
 import { orderSchema } from '@/schemas/order.schema';
+import { type medicineType } from '@/types/medicine.type';
 import { type OrderFormType } from '@/types/order.type';
+import { api } from '@/utils/axios.config';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDownIcon, TrashIcon } from 'lucide-react';
 import React from 'react';
@@ -22,25 +24,15 @@ type CreateOrderSheetProps = {
     onOpenChange: (open: boolean) => void;
 }
 
-const medicines = [
-    { medicineName: 'Aspirin', pricePerUnit: 10, category: 'Painkiller' },
-    { medicineName: 'Paracetamol', pricePerUnit: 5, category: 'Painkiller' },
-    { medicineName: 'Ibuprofen', pricePerUnit: 7, category: 'Painkiller' },
-    { medicineName: 'Amoxicillin', pricePerUnit: 12, category: 'Antibiotic' },
-    { medicineName: 'Ciprofloxacin', pricePerUnit: 15, category: 'Antibiotic' },
-    { medicineName: 'Lisinopril', pricePerUnit: 20, category: 'Antihypertensive' },
-    { medicineName: 'Amlodipine', pricePerUnit: 18, category: 'Antihypertensive' },
-    { medicineName: 'Metformin', pricePerUnit: 25, category: 'Antidiabetic' },
-    { medicineName: 'Glipizide', pricePerUnit: 22, category: 'Antidiabetic' },
-];
-
-
 const CreateOrderSheet = React.memo(({
     open,
     onOpenChange
 }: CreateOrderSheetProps) => {
 
     const { user } = useAuth()
+    const [ medicineData, setMedicineData ] = React.useState<Pick<medicineType, 'medicineName' | 'pricePerUnit' | 'category' | 'id'>[]>([]);
+    const [ isLoading, setIsLoading ] = React.useState<boolean>(true);
+    const [ total, setTotal ] = React.useState<number>(0);
 
     const orderForm = useForm<OrderFormType>({
         resolver: zodResolver(orderSchema),
@@ -48,18 +40,24 @@ const CreateOrderSheet = React.memo(({
             customer: '',
             date: new Date(),
             items: {},
-            total: 0,
             paymentMethod: undefined,
-            orderRepresentative: user?.name || ''
             
         }
     })
 
     const items = orderForm.watch('items');
 
-    const handleSubmitOrder = async (data: OrderFormType) => {
+    const handleOrderSubmit = async (data: OrderFormType) => {
         try {
-            console.log(data);
+           await api.post('/order/add-order', {
+                customerName: data.customer,
+                items: data.items,
+                orderDate: data.date,
+                paymentMethod: data.paymentMethod,
+                total: total,
+                orderRepresentative: user?.name || 'Unknown',
+           })
+           orderForm.reset();
         }
         catch (err) {
             console.error(err);
@@ -67,18 +65,42 @@ const CreateOrderSheet = React.memo(({
     }
     
 
-    const total = React.useMemo(() => {
+    const calculatedTotal = React.useMemo(() => {
         return Object.values(items ?? {}).reduce((sum, m) => sum + (m.quantity ?? 0) * (m.pricePerUnit ?? 0), 0);
     }, [items]);
 
     React.useEffect(() => {
-        orderForm.setValue('total', total, { shouldDirty: true });
-    }, [total, orderForm]);
+        setTotal(calculatedTotal);
+    }, [items])
+
+    React.useEffect(() => {
+        const fetchMedicine = async () => {
+            try {
+                const res = await api.get<medicineType[]>('/inventory/get-inventory')
+                setMedicineData(res.data.map((med) => ({
+                    id: med.id,
+                    medicineName: med.medicineName,
+                    pricePerUnit: med.pricePerUnit,
+                    category: med.category
+                })))
+            }
+            catch (err) {
+                console.error(err);
+            }
+            finally {
+                setTimeout(() => {
+                    setIsLoading(false);
+                }, 3000)
+            }
+        }
+        
+        fetchMedicine();
+    }, [])
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className='min-w-[450px]'>
-                <SheetHeader className='border-b-2 border-deep-sage-green-100 bg-deep-sage-green-50'>
+                <SheetHeader className='border-b-2 border-deep-sage-green-100'>
                     <SheetTitle className='font-primary text-deep-sage-green-800 font-bold text-xl'>
                         New Order
                     </SheetTitle>
@@ -87,7 +109,7 @@ const CreateOrderSheet = React.memo(({
                     </SheetDescription>
                 </SheetHeader>
                 <Form {...orderForm}>
-                    <form id='create-order-form' onSubmit={orderForm.handleSubmit(handleSubmitOrder)}>
+                    <form id='create-order-form' onSubmit={orderForm.handleSubmit(handleOrderSubmit)}>
                         <div className='flex flex-col gap-2 mx-4'>
                             <Label htmlFor='customer' className='font-primary text-deep-sage-green-800 font-semibold text-lg'>Customer</Label>
                             <FormField
@@ -130,8 +152,12 @@ const CreateOrderSheet = React.memo(({
                                                         <CommandInput className='font-primary font-medium' placeholder='Search medicine...' />
                                                         <CommandList>
                                                             <CommandGroup>
-                                                                {medicines.map((med) => (
-                                                                    <CommandItem className='font-primary font-normal text-deep-sage-green-800' key={med.medicineName} onSelect={() => {
+                                                                {isLoading ? (
+                                                                    <div className='p-2 text-center font-primary font-normal text-deep-sage-green-800'>Loading medicines...</div>
+                                                                ) : medicineData.length === 0 ? (
+                                                                    <div className='p-2 text-center font-primary font-normal text-deep-sage-green-800'>No medicines found.</div>
+                                                                ) : medicineData.map((med) => (
+                                                                    <CommandItem className='font-primary font-normal text-deep-sage-green-800' key={med.id} onSelect={() => {
                                                                         field.onChange({
                                                                             ...field.value,
                                                                             [med.medicineName]: {
@@ -217,22 +243,22 @@ const CreateOrderSheet = React.memo(({
                         </div>
                     </form>
                 </Form>
-                <SheetFooter className='flex flex-row items-center gap-2 justify-center bg-deep-sage-green-50 border-t-2 border-deep-sage-green-100'>
+                <SheetFooter className='flex flex-row items-center gap-2 justify-center'>
                     <SheetClose asChild>
                         <Button 
-                        type='reset' 
+                        type='button' 
                         size='default' 
                         variant='outline' 
                         className='cursor-pointer font-secondary font-normal text-deep-sage-green-800 hover:text-deep-sage-green-800 w-30'>
                             Cancel 
                         </Button>
                     </SheetClose>
-                    <Button 
+                    <Button  
                     type='submit' 
                     size='default' 
-                    variant='outline' 
-                    form='create-order-form' 
-                    className='font-secondary font-semibold text-white bg-deep-sage-green-800 hover:bg-deep-sage-green-600 hover:text-white cursor-pointer w-30'>
+                    variant='outline'
+                    className='font-secondary font-semibold text-white bg-deep-sage-green-800 hover:bg-deep-sage-green-600 hover:text-white cursor-pointer w-30'
+                    form='create-order-form'>
                         Place Order
                     </Button>
                 </SheetFooter>

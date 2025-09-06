@@ -44,6 +44,7 @@ const AddMedicineDialog = React.memo(({
    
     const handleSubmitMedicine = async (data: medicineFormType) => {
         try {
+            console.log('Submitted medicine: ',data);
             await api.post('inventory/add-inventory', data);
             medicineForm.reset();
             return;

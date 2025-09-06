@@ -12,6 +12,7 @@ class OrderController {
         }
     }
     async addOrder(req, res) {
+        
         try {
             const { customerName, total, items, orderDate, paymentMethod, orderRepresentative } = req.body;
             const newOrder = await orderService.addOrder(customerName, total, items, orderDate, paymentMethod, orderRepresentative);
@@ -24,7 +25,12 @@ class OrderController {
     }
     async deleteOrder(req, res) {
         try {
+            const currentUser = req.user;
+            if (!currentUser || !currentUser.role) {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
             const { orderId } = req.params;
+            console.log('Deleting order with ID:', orderId);
             const deletedOrder = await orderService.deleteOrder(orderId);
             res.status(200).json({ message: 'Order deleted successfully', order: deletedOrder });
         }

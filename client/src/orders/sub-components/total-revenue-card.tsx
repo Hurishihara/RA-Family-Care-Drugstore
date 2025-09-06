@@ -1,14 +1,41 @@
 import RevenuePieChart from '@/charts/revenue-pie-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowUpIcon } from 'lucide-react';
+import { type PieChartData, type PieChartDashboardAPIResponse, type PieChartDashboardStats, type SelectTimeframe } from '@/types/chart.type';
+import { api } from '@/utils/axios.config';
+import { getPercentageChange } from '@/utils/helper';
+import { ArrowDownIcon, ArrowUpIcon, MoveRightIcon } from 'lucide-react';
 import React from 'react';
-
-type SelectTimeframe = 'day' | 'week' | 'month';
 
 const TotalRevenueCard = () => {
 
     const [timeframe, setTimeframe] = React.useState<SelectTimeframe>('day');
+    const [ pieChartDashboardStats, setpieChartDashboardStats ] = React.useState<PieChartDashboardStats>({
+        day: { currentTotalRevenue: 0, previousTotalRevenue: 0 },
+        week: { currentTotalRevenue: 0, previousTotalRevenue: 0 },
+        month: { currentTotalRevenue: 0, previousTotalRevenue: 0 }
+    })
+    const [ pieChartData, setPieChartData ] = React.useState<PieChartData>({
+        day: [],
+        week: [],
+        month: []
+    })
+
+    React.useEffect(() => {
+        const fetchTotalRevenueStats = async () => {
+            try {
+                const { data } = await api.get<PieChartDashboardAPIResponse>('/chart/pie-chart-data');
+                setpieChartDashboardStats(data.PieChartDashboardStats);
+                setPieChartData(data.PieChartData);
+            }
+            catch (err) {
+                console.error('Error fetching total revenue stats:', err);
+            }
+        }
+        fetchTotalRevenueStats();
+    }, [])
+
+    const currentPercentageChange = getPercentageChange(pieChartDashboardStats[timeframe].currentTotalRevenue, pieChartDashboardStats[timeframe].previousTotalRevenue);
 
     return (
         <Card className='w-full border-2 border-deep-sage-green-200 mt-4'>
@@ -30,17 +57,27 @@ const TotalRevenueCard = () => {
             <CardContent className='flex flex-row justify-between items-center'>
                <div>
                     <div className='text-xs font-primary font-medium text-deep-sage-green-800'>
-                     Total Revenue
+                        Total Revenue
                     </div>
                     <div className='text-5xl font-primary font-bold text-deep-sage-green-800'>
-                        ₱25,024.89
+                        {`₱${pieChartDashboardStats[timeframe].currentTotalRevenue}`}
                     </div>
-                    <div className='flex flex-row items-center text-sm font-primary font-bold mt-3'>
-                        <div>
-                            <ArrowUpIcon className='h-3.5 w-3.5 text-deep-sage-green-600' />
-                        </div>
-                        <div className='text-deep-sage-green-600'>
-                            +5.4%
+                    <div className='flex flex-row gap-1 items-center text-sm font-primary font-bold mt-3'>
+                        {currentPercentageChange > 0 ? (
+                            <div>
+                                <ArrowUpIcon className='h-3.5 w-3.5 text-deep-sage-green-600' />
+                            </div>
+                        ) : currentPercentageChange < 0 ? (
+                            <div>
+                                <ArrowDownIcon className='h-3.5 w-3.5 text-red-600' />
+                            </div>
+                        ) : (
+                            <div>
+                                <MoveRightIcon className='h-3.5 w-3.5 text-muted-foreground' />
+                            </div>
+                        )}
+                         <div className={`${currentPercentageChange > 0 ? 'text-deep-sage-green-600' : currentPercentageChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                            {currentPercentageChange.toFixed(1)}%
                         </div>
                     </div>
                     <div>
@@ -49,7 +86,7 @@ const TotalRevenueCard = () => {
                         </div>
                     </div>
                </div>
-               <RevenuePieChart />
+               <RevenuePieChart filter={timeframe} data={pieChartData}/>
             </CardContent>
         </Card>
     )
