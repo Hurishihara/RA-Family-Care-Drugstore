@@ -1,5 +1,5 @@
 import { type OrderWithTotalAndOrderRep } from '@/types/order.type';
-import { type ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef, type FilterFns } from '@tanstack/react-table';
 import { CalendarCheck2Icon, CreditCardIcon, HashIcon, LayersIcon, ScrollIcon, Trash2Icon, UserCheckIcon, ViewIcon } from 'lucide-react';
 import gcashlogo from '../assets/GCash-Logo.png'
 import { formatDate } from 'date-fns';
@@ -25,6 +25,11 @@ export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
             return <div className='font-bold text-deep-sage-green-800'>
                 {`ORD-${orderId.toString().padStart(3, '0')}`}
             </div>
+        },
+        filterFn: (row, columnId, value) => {
+            const orderId = row.getValue(columnId) as Pick<OrderWithTotalAndOrderRep, 'orderId'>;
+            const formattedOrderId = `ORD-${orderId.toString().padStart(3, '0')}`;
+            return formattedOrderId.toLowerCase().includes((value as string).toLowerCase());
         }
     },
     {
