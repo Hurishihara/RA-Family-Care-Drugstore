@@ -15,9 +15,10 @@ import { type medicineType } from '@/types/medicine.type';
 import { type OrderFormType } from '@/types/order.type';
 import { api } from '@/utils/axios.config';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, ChevronsUpDownIcon, TrashIcon } from 'lucide-react';
+import { Check, ChevronsUpDownIcon, CircleCheckIcon, CircleXIcon, TrashIcon } from 'lucide-react';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 type CreateOrderSheetProps = {
     open: boolean;
@@ -44,12 +45,11 @@ const CreateOrderSheet = React.memo(({
             
         }
     })
-
     const items = orderForm.watch('items');
 
     const handleOrderSubmit = async (data: OrderFormType) => {
         try {
-           await api.post('/order/add-order', {
+            await api.post('/order/add-order', {
                 customerName: data.customer,
                 items: data.items,
                 orderDate: data.date,
@@ -58,9 +58,24 @@ const CreateOrderSheet = React.memo(({
                 orderRepresentative: user?.name || 'Unknown',
            })
            orderForm.reset();
+           toast('Order placed successfully!', {
+            classNames: {
+                title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                description: '!font-primary !font-medium !text-muted-foreground text-xs'
+            },
+            icon: <CircleCheckIcon  className='w-5 h-5 text-deep-sage-green-500'/>,
+            description: 'The new order has been placed to your orders.',
+           })
         }
         catch (err) {
-            console.error(err);
+            toast('Failed to place order. Please try again.', {
+                classNames: {
+                    title: '!font-primary !font-bold !text-red-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                description: `${err instanceof Error ? err.message : 'An unexpected error occurred.'}`,
+            })
         }
     }
     

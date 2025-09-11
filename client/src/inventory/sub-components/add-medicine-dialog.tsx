@@ -11,9 +11,10 @@ import { type medicineFormType } from '@/types/medicine.type'
 import { api } from '@/utils/axios.config'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
-import { CalendarIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon } from 'lucide-react'
+import { CalendarIcon, CircleCheck, CircleXIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon } from 'lucide-react'
 import React from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 
 type AddMedicineDialogProps = {
@@ -44,13 +45,27 @@ const AddMedicineDialog = React.memo(({
    
     const handleSubmitMedicine = async (data: medicineFormType) => {
         try {
-            console.log('Submitted medicine: ',data);
             await api.post('inventory/add-inventory', data);
             medicineForm.reset();
+            toast('Medicine added to inventory successfully!', {
+                classNames: {
+                    title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleCheck  className='w-5 h-5 text-deep-sage-green-500'/>,
+                description: 'The new medicine has been added to your inventory.',
+            });
             return;
         }
-        catch (error) {
-            console.error('Error submitting medicine:', error);
+        catch (err) {
+            toast('Failed to add medicine. Please try again.', {
+                classNames: {
+                    title: '!font-primary !font-bold !text-red-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                description: `${err instanceof Error ? err.message : 'An unexpected error occurred.'}`,
+            })
         }
     }
 

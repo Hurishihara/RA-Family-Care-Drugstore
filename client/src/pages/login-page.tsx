@@ -1,4 +1,4 @@
-import { TabletsIcon } from 'lucide-react';
+import { CircleCheckIcon, CircleXIcon, TabletsIcon } from 'lucide-react';
 import sampleLoginCover from '../assets/minimalist-login-cover.jpg'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { loginSchema } from '@/schemas/login.schema';
@@ -11,6 +11,7 @@ import { api } from '@/utils/axios.config';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/hooks/auth.hook';
 import type { User } from '@/types/user.type';
+import { toast } from 'sonner';
 
 const LoginPage = () => {
 
@@ -35,11 +36,26 @@ const LoginPage = () => {
             });
             setIsAuthenticated(true);
             setUser(res.data.user);
+            toast('Login successful!', {
+                classNames: {
+                    title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleCheckIcon className='w-5 h-5 text-deep-sage-green-500' />,
+                description: `Welcome back, ${res.data.user.name}!`,
+            })
             navigate('/inventory');
             
         }
-        catch (error) {
-            console.error('Login failed:', error);
+        catch (err) {
+            toast('Login failed. Please try again', {
+                classNames: {
+                    title: '!font-primary !font-bold !text-red-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                description: `${err instanceof Error ? err.message : 'An unexpected error occurred.'}`,
+            })
         }
     }
 
