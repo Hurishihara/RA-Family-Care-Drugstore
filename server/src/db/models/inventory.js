@@ -9,9 +9,9 @@ class InventoryDB {
             )
             return res.rows[0];
         }
-        catch (error) {
-            console.error('Error adding item:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryDB: Failed to query insert for item', err);
+            throw new Error('InventoryDB: Failed to insert new item', { cause: err });
         }
     }
     async getAllItems() {
@@ -19,9 +19,9 @@ class InventoryDB {
             const res = await pool.query('SELECT * FROM inventory');
             return res.rows;
         }
-        catch (error) {
-            console.error('Error fetching all items:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryDB: failed to query select for all items', err);
+            throw new Error('InventoryDB: Failed to select all items', { cause: err });
         }
     }
 
@@ -42,9 +42,9 @@ class InventoryDB {
             )
             return res.rows[0];
         }
-        catch (error) {
-            console.error('Error updating item by ID:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryDB: failed to query update for item id', id, err);
+            throw new Error('InventoryDB: Failed to update item', { cause: err });
         }
     }
 
@@ -55,9 +55,9 @@ class InventoryDB {
             );
             return res.rows[0];
         }
-        catch (error) {
-            console.error('Error deleting item by ID:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryDB: failed to query delete for item id', id, err);
+            throw new Error('InventoryDB: Failed to delete item', { cause: err });
         }
     }
 }

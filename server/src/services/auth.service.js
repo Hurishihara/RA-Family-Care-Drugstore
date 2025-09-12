@@ -5,24 +5,27 @@ class AuthService {
   async loginUser(userName, password) {
     try {
       const user = await userDB.loginUser(userName);
-      if (user.password !== password) {
-        throw new Error('Invalid password');
+      if (!user || user.password !== password) {
+        throw new Error('Invalid username or password');
       }
+      
       const token = generateJwtToken(user.id, user.role);
       return { token, user }
     }
     catch (err) {
-      console.error('Error logging in user:', err);
+      console.error('AuthService: Failed logging in user:', err);
       throw err
     }
   }
   async getCurrentUser(id) {
     try {
       const user = await userDB.getCurrentUser(id);
-      return user;
+      if (!user) {
+        throw new Error('User not found');
+      }
     }
     catch (err) {
-      console.error('Error fetching current user:', err);
+      console.error('AuthService: Failed fetching current user:', err);
       throw err;
     }
   }

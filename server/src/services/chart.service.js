@@ -95,7 +95,7 @@ class ChartService {
             return { BarChartData, BarChartDashboardStats }
         }
         catch (err) {
-            console.error('Error in getOrdersBarChartData service:', err);
+            console.error('ChartService: Failed getting orders bar chart data:', err);
             throw err;
         }
     }
@@ -172,7 +172,7 @@ class ChartService {
 
         }
         catch (err) {
-            console.error('Error in getRevenuePieChartData service:', err);
+            console.error('ChartService: Failed getting revenue pie chart data:', err);
             throw err;
         }
     }

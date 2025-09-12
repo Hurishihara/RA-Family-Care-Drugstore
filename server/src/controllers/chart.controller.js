@@ -1,14 +1,15 @@
+import { StatusCodes } from 'http-status-codes';
 import chartService from '../services/chart.service.js';
+import CustomError from '../utils/error.js';
 
 class ChartController {
-    async getOrdersBarChartData(req, res) {
+    async getOrdersBarChartData(req, res, next) {
         try {
             const data = await chartService.getOrdersBarChartData();
             res.status(200).json(data);
         }
         catch (err) {
-            console.error('Error in getOrdersBarChartData controller:', err);
-            res.status(500).json({ error: 'Internal server error' });
+            return next(new CustomError('Failed to retrieve bar chart data', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
     async getRevenuePieChartData(req, res) {
@@ -17,8 +18,7 @@ class ChartController {
             res.status(200).json(data);
         }
         catch (err) {
-            console.error('Error in getRevenuePieChartData controller:', err);
-            res.status(500).json({ error: 'Internal server error' });
+            return next(new CustomError('Failed to retrieve pie chart data', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
 }

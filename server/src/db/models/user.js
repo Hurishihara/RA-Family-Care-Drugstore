@@ -7,14 +7,11 @@ class UserDB {
                 'SELECT id, name, role, password FROM users WHERE username = $1',
                 [userName]
             )
-            if (res.rows.length === 0) {
-                throw new Error('User not found');
-            }
             return res.rows[0];
         }
         catch (err) {
-            console.error('Error logging in user:', err);
-            throw err;
+            console.error('UserDB: Failed to query select for user', userName, err);
+            throw new Error('UserDB: Failed to select for user login', { cause: err });
         }
     }
     async addUser(name, userName, password, role) {
@@ -26,8 +23,8 @@ class UserDB {
             return res.rows[0];
         }
         catch (err) {
-            console.error('Error adding user:', err);
-            throw err;
+            console.error('UserDB: Failed to query insert for user', userName, err);
+            throw new Error('UserDB: Failed to insert new user', { cause: err });
         }
     }
     async deleteUser(id) {
@@ -38,8 +35,8 @@ class UserDB {
             return res.rows[0];
         }
         catch (err) {
-            console.error('Error deleting user by ID:', err);
-            throw err;
+            console.error('UserDB: failed to query delete for user id', id, err);
+            throw new Error('UserDB: Failed to delete user', { cause: err });
         }
     }
     async getUsers() {
@@ -48,8 +45,8 @@ class UserDB {
             return res.rows;
         }
         catch (err) {
-            console.error('Error fetching users:', err);
-            throw err;
+            console.error('UserDB: failed to query select for all users', err);
+            throw new Error('UserDB: Failed to select for all users', { cause: err });
         }
     }
     async getCurrentUser(id) {
@@ -60,8 +57,8 @@ class UserDB {
             return res.rows[0]
         }
         catch (err) {
-            console.error('Error fetching specific user:', err);
-            throw err;
+            console.error('UserDB: failed to query select for user id', id, err);
+            throw new Error('UserDB: Failed to select for user', { cause: err });
         }
     } 
 }

@@ -1,17 +1,17 @@
+import { StatusCodes } from 'http-status-codes';
 import user from '../db/models/user.js';
 import inventoryService from '../services/inventory.service.js';
+import CustomError from '../utils/error.js';
 
 class InventoryController {
-    async addItem(req, res) {
+    async addItem(req, res, next) {
         try {
             const { medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived } = req.body;
             const newItem = await inventoryService.addItem(medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived);
             res.status(201).json({ message: 'Item added successfully', item: newItem });
         }
-        catch (error) {
-            console.error('Error adding item:', error);
-            res.status(500).json({ message: 'Internal server error' });
-            throw error;
+        catch (err) {
+           return next(new CustomError('Failed to add item', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
     async getAllItems(req, res) {
@@ -19,10 +19,8 @@ class InventoryController {
             const items = await inventoryService.getAllItems();
             res.status(200).json(items);
         }
-        catch (error) {
-            console.error('Error fetching all items:', error);
-            res.status(500).json({ message: 'Internal server error' });
-            throw error;
+        catch (err) {
+           return next(new CustomError('Failed to fetch items', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
     async updateItemById(req, res) {
@@ -38,10 +36,11 @@ class InventoryController {
             console.log('Updated Item:', updatedItem);
             res.status(200).json(updatedItem);
         }
-        catch (error) {
-            console.error('Error updating item by ID:', error);
-            res.status(500).json({ message: 'Internal server error' });
-            throw error;
+        catch (err) {
+            if (err.message === 'Item not found') {
+                return next(new CustomError('Item not found', 'The item you are trying to update does not exist', StatusCodes.NOT_FOUND));
+            }
+            return next(new CustomError('Failed to update item', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
     async deleteItemById(req, res) {
@@ -54,10 +53,11 @@ class InventoryController {
             const deletedItem = await inventoryService.deleteItemById(id);
             res.status(200).json({ message: 'Item deleted successfully', item: deletedItem });
         }
-        catch (error) {
-            console.error('Error deleting item by ID:', error);
-            res.status(500).json({ message: 'Internal server error' });
-            throw error;
+        catch (err) {
+            if (err.message === 'Item not found') {
+                return next(new CustomError('Item not found', 'The item you are trying to delete does not exist', StatusCodes.NOT_FOUND));
+            }
+            return next(new CustomError('Failed to delete item', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
 }

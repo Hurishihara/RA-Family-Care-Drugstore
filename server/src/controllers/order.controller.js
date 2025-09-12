@@ -1,17 +1,18 @@
+import { StatusCodes } from 'http-status-codes';
 import orderService from '../services/order.service.js';
+import CustomError from '../utils/error.js';
 
 class OrderController {
-    async getOrders(req, res) {
+    async getOrders(req, res, next) {
         try {
             const orders = await orderService.getOrders();
             res.status(200).json(orders);
         }
         catch (err) {
-            console.error('Error in getOrders controller:', err);
-            res.status(500).json({ error: 'Internal server error' });
+            return next(new CustomError('Failed to fetch orders', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
-    async addOrder(req, res) {
+    async addOrder(req, res, next) {
         
         try {
             const { customerName, total, items, orderDate, paymentMethod, orderRepresentative } = req.body;
@@ -19,24 +20,24 @@ class OrderController {
             res.status(201).json(newOrder);
         }
         catch (err) {
-            console.error('Error in addOrder controller:', err);
-            res.status(500).json({ error: 'Internal server error' });
+            return next(new CustomError('Failed to add order', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
-    async deleteOrder(req, res) {
+    async deleteOrder(req, res, next) {
         try {
             const currentUser = req.user;
-            if (!currentUser || !currentUser.role) {
-                return res.status(403).json({ error: 'Forbidden' });
+            if (currentUser.role !== 'admin') {
+                return next(new CustomError('Admin privileges required', 'You do not have permission to delete orders', StatusCodes.FORBIDDEN));
             }
             const { orderId } = req.params;
-            console.log('Deleting order with ID:', orderId);
             const deletedOrder = await orderService.deleteOrder(orderId);
             res.status(200).json({ message: 'Order deleted successfully', order: deletedOrder });
         }
         catch (err) {
-            console.error('Error in deleteOrder controller:', err);
-            res.status(500).json({ error: 'Internal server error' });
+            if (err.message === 'Order not found') {
+                return next(new CustomError('Order not found', 'The order you are trying to delete does not exist', StatusCodes.NOT_FOUND));
+            }
+            return next(new CustomError('Failed to delete order', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
 }

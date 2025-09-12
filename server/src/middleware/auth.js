@@ -1,12 +1,13 @@
 import { parse } from 'cookie'
 import { verifyJwtToken } from '../utils/jwt.js';
+import CustomError from '../utils/error.js';
+import { StatusCodes } from 'http-status-codes';
 
 const authValidation = (req, res, next) => {
     const cookieHeader = req.headers.cookie ? parse(req.headers.cookie) : {};
 
     if (!cookieHeader.authToken) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return
+        return next(new CustomError('Unauthorized', 'No authentication provided. Please log in to continue', StatusCodes.UNAUTHORIZED));
     }
     try {
         const decoded = verifyJwtToken(cookieHeader.authToken);
@@ -14,7 +15,10 @@ const authValidation = (req, res, next) => {
         next();
     }
     catch (err) {
-        res.status(401).json({ error: 'Invalid or expired token' });
+        if (err.message === 'Invalid or expired token') {
+            return next(new CustomError('Unauthorized', 'Session expired or invalid. Please log in again.', StatusCodes.UNAUTHORIZED));
+        }
+        return next(new CustomError('Unauthorized', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
     }
 
 }

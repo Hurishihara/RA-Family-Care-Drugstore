@@ -15,7 +15,7 @@ class OrderService {
             }))
         }
         catch (err) {
-            console.error('Error fetching orders:', err);
+            console.error('OrderService: Failed fetching orders:', err);
             throw err;
         }
     }
@@ -26,17 +26,20 @@ class OrderService {
             return newOrder;
         }
         catch (err) {
-            console.error('Error adding order:', err);
+            console.error('OrderService: Failed adding new order:', err);
             throw err;
         }
     }
     async deleteOrder(orderId) {
         try {
             const deletedOrder = await orderDB.deleteOrder(orderId);
+            if (!deletedOrder) {
+                throw new Error('Order not found');
+            }
             return deletedOrder;
         }
         catch (err) {
-            console.error('Error deleting order:', err);
+            console.error('OrderService: Failed deleting order:', err);
             throw err;
         }
     }

@@ -6,9 +6,9 @@ class InventoryService {
             const newItem = await inventoryDB.addItem(name, category, quantity, pricePerUnit, costPerUnit, expiryDate, dateReceived);
             return newItem;
         }
-        catch (error) {
-            console.error('Error adding item:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryService: Failed adding new item:', err);
+            throw err;
         }
     }
     async getAllItems() {
@@ -25,14 +25,17 @@ class InventoryService {
                 dateReceived: item.date_received
             }))
         }
-        catch (error) {
-            console.error('Error fetching all items:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryService: Failed fetching all items:', err);
+            throw err;
         }
     }
     async updateItemById(id, fields) {
         try {
             const updatedItem = await inventoryDB.updateItemById(id, fields);
+            if (!updatedItem) {
+                throw new Error('Item not found');
+            }
             return {
                 id: updatedItem.id,
                 medicineName: updatedItem.name,
@@ -44,19 +47,22 @@ class InventoryService {
                 dateReceived: updatedItem.date_received
             }
         }
-        catch (error) {
-            console.error('Error updating item by ID:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryService: Failed updating item by ID:', err);
+            throw err;
         }
     }
     async deleteItemById(id) {
        try {
             const deletedItem = await inventoryDB.deleteItemById(id);
+            if (!deletedItem) {
+                throw new Error('Item not found');
+            }
             return deletedItem;
         }
-        catch (error) {
-            console.error('Error deleting item by ID:', error);
-            throw error;
+        catch (err) {
+            console.error('InventoryService: Failed deleting item by ID:', err);
+            throw err;
         }
     }
 }

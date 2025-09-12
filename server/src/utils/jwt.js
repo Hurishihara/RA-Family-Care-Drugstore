@@ -15,6 +15,7 @@ const verifyJwtToken = (token) => {
     }
     catch (err) {
         console.error('JWT verification error:', err);
+        throw new Error('Invalid or expired token');
     }
 }
 

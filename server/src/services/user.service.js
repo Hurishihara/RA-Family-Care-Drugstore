@@ -7,17 +7,20 @@ class UserService {
             return newUser;
         }
         catch (err) {
-            console.error('Error adding user:', err);
+            console.error('UserService: Error adding user:', err);
             throw err;
         }
     }
     async deleteUser(id) {
         try {
             const deletedUser = await userDB.deleteUser(id);
+            if (!deletedUser) {
+                throw new Error('User not found');
+            }
             return deletedUser;
         }
         catch (err) {
-            console.error('Error deleting user:', err);
+            console.error('UserService: Error deleting user:', err);
             throw err;
         }
     }
@@ -27,7 +30,7 @@ class UserService {
             return users;
         }
         catch (err) {
-            console.error('Error fetching users:', err);
+            console.error('UserService: Error fetching users:', err);
             throw err;
         }
     }

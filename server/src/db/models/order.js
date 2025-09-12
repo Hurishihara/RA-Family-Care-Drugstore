@@ -7,8 +7,8 @@ class OrderDB {
             return res.rows;
         }
         catch (err) {
-            console.error('Error fetching orders:', err);
-            throw err;
+            console.error('OrderDB: failed to query select for all orders', err);
+            throw new Error('OrderDB: Failed to select all orders', { cause: err });
         }
     }
     async addOrder(customerName, total, items, orderDate, paymentMethod, orderRepresentative) {
@@ -28,8 +28,8 @@ class OrderDB {
             return res.rows[0];
         }
         catch (err) {
-            console.error('Error adding order:', err);
-            throw err;
+           console.error('OrderDB: Failed to query insert for order', err);
+           throw new Error('OrderDB: Failed to insert new order', { cause: err });
         }
     }
     async deleteOrder(orderId) {
@@ -38,8 +38,8 @@ class OrderDB {
             return res.rows[0];
         }
         catch (err) {
-            console.error('Error deleting order by ID:', err);
-            throw err;
+            console.error('OrderDB: failed to query delete for order id', orderId, err);
+            throw new Error('OrderDB: Failed to delete order', { cause: err });
         }
     }
     async getOrderByTimeframe(startDate) {
@@ -48,7 +48,8 @@ class OrderDB {
             return res.rows;
         }
         catch (err) {
-            console.error('Error fetching orders by timeframe:', err);
+            console.error('OrderDB: failed to query select for orders by timeframe', err);
+            throw new Error('OrderDB: Failed to select orders by timeframe', { cause: err });
         }
     }
 }
