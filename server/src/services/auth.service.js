@@ -6,17 +6,19 @@ class AuthService {
   async loginUser(userName, password) {
     try {
       const user = await userDB.loginUser(userName);
-      const passwordMatch = await comparePassword(password, user.password);
-      if (!user || !passwordMatch) {
+      if (user) {
+        const passwordMatch = await comparePassword(password, user.password);
+        if (passwordMatch) {
+          const token = generateJwtToken(user.id, user.role);
+          return { token, user };
+        }
         throw new Error('Invalid username or password');
       }
-      
-      const token = generateJwtToken(user.id, user.role);
-      return { token, user }
+      throw new Error('Invalid username or password');
     }
     catch (err) {
       console.error('AuthService: Failed logging in user:', err);
-      throw err
+      throw err;
     }
   }
   async getCurrentUser(id) {
