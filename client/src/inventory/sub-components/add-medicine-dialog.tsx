@@ -7,11 +7,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { medicineSchema} from '@/schemas/medicine.schema'
+import type { ErrorResponse } from '@/types/error.response'
 import { type medicineFormType } from '@/types/medicine.type'
 import { api } from '@/utils/axios.config'
 import { zodResolver } from '@hookform/resolvers/zod'
+import axios from 'axios'
 import { format } from 'date-fns'
-import { CalendarIcon, CircleCheck, CircleXIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon } from 'lucide-react'
+import { CalendarIcon, CircleCheck, CircleXIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon, WifiOffIcon } from 'lucide-react'
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -58,13 +60,25 @@ const AddMedicineDialog = React.memo(({
             return;
         }
         catch (err) {
-            toast('Failed to add medicine. Please try again.', {
+            if (axios.isAxiosError(err)) {
+                const error = err.response?.data as ErrorResponse;
+                toast(error.title, {
+                    classNames: {
+                        title: '!font-primary !font-bold !text-red-500 text-md',
+                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                    },
+                    icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                    description: error.description,
+                })
+            }
+            const error = err as ErrorResponse;
+            toast(error.title, {
                 classNames: {
                     title: '!font-primary !font-bold !text-red-500 text-md',
                     description: '!font-primary !font-medium !text-muted-foreground text-xs'
                 },
-                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                description: `${err instanceof Error ? err.message : 'An unexpected error occurred.'}`,
+                icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+                description: error.description,
             })
         }
     }

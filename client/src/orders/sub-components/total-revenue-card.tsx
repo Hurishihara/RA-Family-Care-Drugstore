@@ -2,10 +2,13 @@ import RevenuePieChart from '@/charts/revenue-pie-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type PieChartData, type PieChartDashboardAPIResponse, type PieChartDashboardStats, type SelectTimeframe } from '@/types/chart.type';
+import type { ErrorResponse } from '@/types/error.response';
 import { api } from '@/utils/axios.config';
 import { getPercentageChange } from '@/utils/helper';
-import { ArrowDownIcon, ArrowUpIcon, MoveRightIcon } from 'lucide-react';
+import axios from 'axios';
+import { ArrowDownIcon, ArrowUpIcon, CircleXIcon, MoveRightIcon, WifiOffIcon } from 'lucide-react';
 import React from 'react';
+import { toast } from 'sonner';
 
 const TotalRevenueCard = () => {
 
@@ -29,7 +32,26 @@ const TotalRevenueCard = () => {
                 setPieChartData(data.PieChartData);
             }
             catch (err) {
-                console.error('Error fetching total revenue stats:', err);
+                if (axios.isAxiosError(err)) {
+                    const error = err.response?.data as ErrorResponse;
+                    toast(error.title, {
+                        classNames: {
+                            title: '!font-primary !font-bold !text-red-500 text-md',
+                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                        },
+                        icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                        description: error.description,
+                    })
+                }
+                const error = err as ErrorResponse;
+                toast(error.title, {
+                    classNames: {
+                        title: '!font-primary !font-bold !text-red-500 text-md',
+                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                    },
+                    icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+                    description: error.description,
+                })
             }
         }
         fetchTotalRevenueStats();

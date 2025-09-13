@@ -1,4 +1,4 @@
-import { CircleCheckIcon, CircleXIcon, TabletsIcon } from 'lucide-react';
+import { CircleCheckIcon, CircleXIcon, TabletsIcon, WifiOffIcon } from 'lucide-react';
 import sampleLoginCover from '../assets/minimalist-login-cover.jpg'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { loginSchema } from '@/schemas/login.schema';
@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router';
 import { useAuth } from '@/hooks/auth.hook';
 import type { User } from '@/types/user.type';
 import { toast } from 'sonner';
+import axios from 'axios';
+import type { ErrorResponse } from '@/types/error.response';
 
 const LoginPage = () => {
 
@@ -48,13 +50,25 @@ const LoginPage = () => {
             
         }
         catch (err) {
-            toast('Login failed. Please try again', {
+            if (axios.isAxiosError(err)) {
+                const error = err.response?.data as ErrorResponse;
+                toast(error.title, {
+                    classNames: {
+                        title: '!font-primary !font-bold !text-red-500 text-md',
+                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                    },
+                    icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                    description: error.description,
+                })
+            }
+            const error = err as ErrorResponse;
+            toast(error.title, {
                 classNames: {
                     title: '!font-primary !font-bold !text-red-500 text-md',
                     description: '!font-primary !font-medium !text-muted-foreground text-xs'
                 },
-                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                description: `${err instanceof Error ? err.message : 'An unexpected error occurred.'}`,
+                icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+                description: error.description,
             })
         }
     }
