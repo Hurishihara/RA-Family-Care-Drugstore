@@ -1,3 +1,4 @@
+import { hashPassword } from '../utils/bcrypt.js';
 import { client } from './dbClient.js';
 
 class Database {
@@ -77,8 +78,8 @@ class Database {
             await client.query(createOrdersTable);
 
             
-            await client.query(insertAdminAccount, [adminAccount.name, adminAccount.userName, adminAccount.password, adminAccount.role]);
-            await client.query(insertStaffAccount, [staffAccount.name, staffAccount.userName, staffAccount.password, staffAccount.role]);
+            await client.query(insertAdminAccount, [adminAccount.name, adminAccount.userName, await hashPassword(adminAccount.password), adminAccount.role]);
+            await client.query(insertStaffAccount, [staffAccount.name, staffAccount.userName, await hashPassword(staffAccount.password), staffAccount.role]);
 
             console.log('Tables created successfully & data inserted successfully');
             await client.end();

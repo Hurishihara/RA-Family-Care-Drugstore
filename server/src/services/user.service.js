@@ -1,9 +1,11 @@
 import userDB from '../db/models/user.js'
+import { hashPassword } from '../utils/bcrypt.js';
 
 class UserService {
     async addUser(name, userName, password, role) {
         try {
-            const newUser = await userDB.addUser(name, userName, password, role);
+            const hashedPassword = await hashPassword(password);
+            const newUser = await userDB.addUser(name, userName, hashedPassword, role);
             return newUser;
         }
         catch (err) {
