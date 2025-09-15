@@ -3,7 +3,9 @@ import type { User } from '@/types/user.type';
 import { api } from '@/utils/axios.config';
 import { useLocation } from 'react-router';
 import { toast } from 'sonner';
-import { CircleXIcon } from 'lucide-react';
+import { CircleXIcon, WifiOffIcon } from 'lucide-react';
+import axios from 'axios';
+import type { ErrorResponse } from '@/types/error.response';
 
 interface AuthContextProps {
     isAuthenticated: boolean;
@@ -30,21 +32,33 @@ const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         const fetchUser = async () => {
             try {
                 const response = await api.get<User>('/auth/current-user');
-                console.log('Fetched user:', response.data);
                 setUser(response.data);
                 setIsAuthenticated(true);
             }
             catch (err) {
                 setIsAuthenticated(false);
-                toast('Session expired. Please login again.', {
+                if (axios.isAxiosError(err)) {
+                    const error = err.response?.data as ErrorResponse;
+                    toast(error.title, {
+                        classNames: {
+                            title: '!font-primary !font-bold !text-red-500 text-md',
+                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                        },
+                        icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                        description: error.description,
+                    })
+                    return;
+                }
+                const error = err as ErrorResponse;
+                toast(error.title, {
                     classNames: {
                         title: '!font-primary !font-bold !text-red-500 text-md',
                         description: '!font-primary !font-medium !text-muted-foreground text-xs'
                     },
-                    duration: 3000,
-                    icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                    description: `${err instanceof Error ? err.message : 'An unexpected error occurred.'}`,
+                    icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+                    description: error.description,
                 })
+                return;
             }
             finally {
                 setLoading(false);

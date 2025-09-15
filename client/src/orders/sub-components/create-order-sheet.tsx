@@ -70,14 +70,28 @@ const CreateOrderSheet = React.memo(({
            })
         }
         catch (err) {
-            toast('Failed to place order. Please try again.', {
+            if (axios.isAxiosError(err)) {
+                const error = err.response?.data as ErrorResponse;
+                toast(error.title, {
+                    classNames: {
+                        title: '!font-primary !font-bold !text-red-500 text-md',
+                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                    },
+                    icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                    description: error.description,
+                })
+                return;
+            }
+            const error = err as ErrorResponse;
+            toast(error.title, {
                 classNames: {
                     title: '!font-primary !font-bold !text-red-500 text-md',
                     description: '!font-primary !font-medium !text-muted-foreground text-xs'
                 },
-                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                description: `${err instanceof Error ? err.message : 'An unexpected error occurred.'}`,
+                icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+                description: error.description,
             })
+            return;
         }
     }
     
@@ -112,6 +126,7 @@ const CreateOrderSheet = React.memo(({
                         icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
                         description: error.description,
                     })
+                    return;
                 }
                 const error = err as ErrorResponse;
                 toast(error.title, {
@@ -122,6 +137,7 @@ const CreateOrderSheet = React.memo(({
                     icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
                     description: error.description,
                 })
+                return;
             }
             finally {
                 setTimeout(() => {

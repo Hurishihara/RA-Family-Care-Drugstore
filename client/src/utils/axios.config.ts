@@ -1,6 +1,3 @@
-
-
-import type { ErrorResponse } from '@/types/error.response';
 import axios from 'axios';
 
 
@@ -14,7 +11,7 @@ api.interceptors.response.use(
     err => {
         if (axios.isAxiosError(err)) {
             if (err.response) {
-                return Promise.reject(err.response.data as ErrorResponse)
+                return Promise.reject(err)
             }
             return Promise.reject({
                 title: err.message,

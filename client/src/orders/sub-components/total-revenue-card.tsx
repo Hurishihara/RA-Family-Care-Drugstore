@@ -42,6 +42,7 @@ const TotalRevenueCard = () => {
                         icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
                         description: error.description,
                     })
+                    return;
                 }
                 const error = err as ErrorResponse;
                 toast(error.title, {
@@ -52,6 +53,7 @@ const TotalRevenueCard = () => {
                     icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
                     description: error.description,
                 })
+                return;
             }
         }
         fetchTotalRevenueStats();
