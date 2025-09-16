@@ -128,6 +128,11 @@
   --color-deep-sage-green-200: #c1d9c7;
   --color-deep-sage-green-100: #dfece1;
   --color-deep-sage-green-50: #f2f7f3;
+
+  --breakpoint-base: 20rem;
+  --breakpoint-basexl: 23.4375rem;
+  --breakpoint-xs: 25.875rem;
+  --breakpoint-3xl: 120rem;
 }
 
 @layer base {
