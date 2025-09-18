@@ -83,7 +83,7 @@ const TotalRevenueCard = () => {
                     <div className='text-xs font-primary font-medium text-deep-sage-green-800'>
                         Total Revenue
                     </div>
-                    <div className='text-5xl font-primary font-bold text-deep-sage-green-800'>
+                    <div className='base:text-3xl md:text-5xl font-primary font-bold text-deep-sage-green-800'>
                         {`₱${pieChartDashboardStats[timeframe].currentTotalRevenue}`}
                     </div>
                     <div className='flex flex-row gap-1 items-center text-sm font-primary font-bold mt-3'>

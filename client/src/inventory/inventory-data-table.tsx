@@ -33,7 +33,7 @@ interface DataTableProps<TData, TValue> {
 
 
 
-const DataTable = <TData, TValue>({
+const InventoryDataTable = <TData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) => {
@@ -161,4 +161,4 @@ const DataTable = <TData, TValue>({
     )
 }
 
-export default DataTable
+export default InventoryDataTable

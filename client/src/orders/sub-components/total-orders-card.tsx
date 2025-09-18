@@ -83,7 +83,7 @@ const TotalOrdersCard = () => {
                     <div className='text-xs font-primary font-medium text-deep-sage-green-800'>
                      Total Orders
                     </div>
-                    <div className='text-5xl font-primary font-bold text-deep-sage-green-800'>
+                    <div className='base:text-3xl md:text-5xl font-primary font-bold text-deep-sage-green-800'>
                      {dashboardStats[timeframe].currentTotalOrders}
                     </div>
                     <div className='flex flex-row items-center text-sm font-primary font-bold mt-3'>

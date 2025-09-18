@@ -45,14 +45,12 @@ const OrderDataTable = <TData, TValue>({
                 <h1 className='font-primary font-normal text-xs text-muted-foreground'>
                     View and manage all orders placed within the pharmacy.
                 </h1>
-
-                <div className='flex flex-row justify-between w-full gap-3'>
+                <div className='flex base:flex-col xl:flex-row gap-3'>
                     <TotalOrdersCard />
                     <TotalRevenueCard />
                 </div>
-
-                <div className='flex flex-row items-center gap-2 mt-5'>
-                    <div className='relative min-w-xs'>
+                <div className='flex base:flex-col xs:flex-row items-start gap-2 mt-5'>
+                    <div className='relative'>
                         <Input 
                         placeholder='Find order' 
                         value={(table.getColumn('orderId')?.getFilterValue() as string) ?? ''}
@@ -116,7 +114,7 @@ const OrderDataTable = <TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className='flex items-center justify-end space-x-3 mx-4 mb-15'>
+            <div className='flex items-center base:justify-center xl:justify-end  space-x-3 mx-4 mb-15'>
                 <div className='flex gap-2'>
                     <Button className='bg-deep-sage-green-700 font-secondary text-white group hover:bg-deep-sage-green hover:text-white' variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                     <ArrowLeftCircleIcon className='text-white transition-all duration-300 group-hover:-translate-x-1' />
