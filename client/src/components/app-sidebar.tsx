@@ -62,7 +62,7 @@ export const AppSideBar = ({
     ...props
 }: React.ComponentProps<typeof Sidebar>) => {
     const { user } = useAuth();
-
+    
     const filteredNavMain = data.navMain.filter(section => {
         if (section.permissions && !hasPermission(user || { id: '1', name: 'Guest', role: 'Staff'}, section.permissions)) {
             return false;

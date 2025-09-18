@@ -15,13 +15,11 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import type { ErrorResponse } from '@/types/error.response';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const LoginPage = () => {
 
     const { setIsAuthenticated, setUser } = useAuth();
     const navigate = useNavigate();
-    const isMobile = useIsMobile();
     const loginForm = useForm<loginFormType>({
         resolver: zodResolver(loginSchema),
         defaultValues: {

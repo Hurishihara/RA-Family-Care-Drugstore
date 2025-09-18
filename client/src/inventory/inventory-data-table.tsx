@@ -70,8 +70,8 @@ const DataTable = <TData, TValue>({
                 <h1 className='font-primary font-semibold text-2xl text-deep-sage-green-800'>Inventory Summary</h1>
                 <h1 className='font-primary font-normal text-xs text-muted-foreground'>View and manage all medications in your pharmacy stock</h1>
             </div>
-            <div className='flex flex-row mb-4 ml-4 items-center gap-2'>
-                <div className='relative min-w-xs'>
+            <div className='flex base:flex-col xs:flex-row m-4 items-start gap-2'>
+                <div className='relative'>
                     <Input 
                     placeholder='Filter by name...' 
                     value={(table.getColumn('medicineName')?.getFilterValue() as string) ?? ''}
@@ -140,7 +140,7 @@ const DataTable = <TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className='flex items-center justify-end space-x-3 mx-4 mb-15'>
+            <div className='flex items-center base:justify-center xl:justify-end space-x-3 mx-4 mb-15'>
                 <div className='flex gap-2'>
                     <Button className='bg-deep-sage-green-700 font-secondary text-white group hover:bg-deep-sage-green hover:text-white' variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                     <ArrowLeftIcon className='text-white transition-all duration-300 group-hover:-translate-x-1' />
