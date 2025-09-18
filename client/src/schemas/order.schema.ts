@@ -10,6 +10,7 @@ export const orderSchema = z.object({
     items: z.record(
         z.string(), 
         z.object({
+            itemId: z.number(),
             category: z.string(),
             quantity: z.number()
             .int({ message: 'Quantity must be a number.'})

@@ -1,3 +1,5 @@
+import { pool } from '../db/dbClient.js';
+import inventoryDB from '../db/models/inventory.js';
 import orderDB from '../db/models/order.js';
 
 class OrderService {
@@ -20,14 +22,22 @@ class OrderService {
         }
     }
     async addOrder(customerName, total, items, orderDate, paymentMethod, orderRepresentative) {
+        // Transaction handling for adding order and updating inventory
+        const client = await pool.connect();
         try {
             const stringifiedItems = JSON.stringify(items);
-            const newOrder = await orderDB.addOrder(customerName, total, stringifiedItems, orderDate, paymentMethod, orderRepresentative);
-            return newOrder;
+            await client.query('BEGIN');
+            await orderDB.addOrder(customerName, total, stringifiedItems, orderDate, paymentMethod, orderRepresentative, client),
+            await inventoryDB.updateInventoryAfterOrder(items, client);
+            await client.query('COMMIT');
         }
         catch (err) {
+            await client.query('ROLLBACK');
             console.error('OrderService: Failed adding new order:', err);
             throw err;
+        }
+        finally {
+            client.release();
         }
     }
     async deleteOrder(orderId) {

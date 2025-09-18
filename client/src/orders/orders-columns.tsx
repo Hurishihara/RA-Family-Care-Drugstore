@@ -1,6 +1,6 @@
 import { type OrderWithTotalAndOrderRep } from '@/types/order.type';
-import { type ColumnDef, type FilterFns } from '@tanstack/react-table';
-import { CalendarCheck2Icon, CreditCardIcon, HashIcon, LayersIcon, ScrollIcon, Trash2Icon, UserCheckIcon, ViewIcon } from 'lucide-react';
+import { type ColumnDef } from '@tanstack/react-table';
+import { CalendarCheck2Icon, CircleXIcon, CreditCardIcon, HashIcon, LayersIcon, ScrollIcon, Trash2Icon, UserCheckIcon, ViewIcon, WifiOffIcon } from 'lucide-react';
 import gcashlogo from '../assets/GCash-Logo.png'
 import { formatDate } from 'date-fns';
 import React from 'react';
@@ -8,6 +8,9 @@ import ViewOrderSheet from './sub-components/view-order-sheet';
 import { useAuth } from '@/hooks/auth.hook';
 import { hasPermission } from '@/utils/permission';
 import { api } from '@/utils/axios.config';
+import axios from 'axios';
+import type { ErrorResponse } from '@/types/error.response';
+import { toast } from 'sonner';
 
 export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
     {
@@ -150,7 +153,28 @@ export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
                     window.location.reload();
                 }
                 catch (err) {
-                    console.error('Error deleting order:', err);
+                    if (axios.isAxiosError(err)) {
+                        const error = err.response?.data as ErrorResponse;
+                        toast(error.title, {
+                            classNames: {
+                                title: '!font-primary !font-bold !text-red-500 text-md',
+                                description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                            },
+                            icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                            description: error.description,
+                        });
+                        return;
+                    }
+                    const error = err as ErrorResponse;
+                    toast(error.title, {
+                        classNames: {
+                            title: '!font-primary !font-bold !text-red-500 text-md',
+                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                        },
+                        icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+                        description: error.description,
+                    });
+                    return;
                 }
             }
 

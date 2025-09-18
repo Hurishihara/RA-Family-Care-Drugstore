@@ -60,6 +60,33 @@ class InventoryDB {
             throw new Error('InventoryDB: Failed to delete item', { cause: err });
         }
     }
+    async updateInventoryAfterOrder(items, client) {
+        try {
+            const queries = Object.keys(items).map((itemName) => {
+                const item = items[itemName];
+                return (async () => {
+                    const checkQuantity = await client.query('SELECT quantity FROM inventory WHERE id = $1',
+                        [item.itemId]
+                    );
+                    if (checkQuantity.rows[0].quantity < item.quantity) {
+                        throw new Error(`Not enough stock available for item: "${itemName.trimEnd()}" (Requested: ${item.quantity}, Available: ${checkQuantity.rows[0].quantity})`);
+                    };
+                    // If enough stock, proceed to update
+                    return client.query('UPDATE inventory SET quantity = quantity - $1 WHERE id = $2', 
+                        [item.quantity, item.itemId]
+                    );
+                })()
+            });
+            await Promise.all(queries);
+        }
+        catch (err) {
+            console.error('InventoryDB: failed to query update inventory after order', err);
+            if (err.message.startsWith('Not enough stock available for')) {
+                throw err;
+            }
+            throw new Error('InventoryDB: Failed to update inventory after order', { cause: err });
+        }
+    }
 }
 
 export default new InventoryDB();

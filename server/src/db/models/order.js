@@ -11,9 +11,9 @@ class OrderDB {
             throw new Error('OrderDB: Failed to select all orders', { cause: err });
         }
     }
-    async addOrder(customerName, total, items, orderDate, paymentMethod, orderRepresentative) {
+    async addOrder(customerName, total, items, orderDate, paymentMethod, orderRepresentative, client) {
         try {
-            const res = await pool.query(
+            const res = await client.query(
                 `
                     INSERT INTO ORDERS (
                         customer_name,

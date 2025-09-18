@@ -16,17 +16,20 @@ class OrderController {
         
         try {
             const { customerName, total, items, orderDate, paymentMethod, orderRepresentative } = req.body;
-            const newOrder = await orderService.addOrder(customerName, total, items, orderDate, paymentMethod, orderRepresentative);
-            res.status(201).json(newOrder);
+            await orderService.addOrder(customerName, total, items, orderDate, paymentMethod, orderRepresentative);
+            res.status(201).json({ title: 'Order placed successfully', description: 'The new order has been placed to your orders list.'});
         }
         catch (err) {
+            if (err.message.startsWith('Not enough stock available for')) {
+                return next(new CustomError('Insufficient stock', err.message, StatusCodes.BAD_REQUEST));
+            }
             return next(new CustomError('Failed to add order', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
     async deleteOrder(req, res, next) {
         try {
             const currentUser = req.user;
-            if (currentUser.role !== 'admin') {
+            if (currentUser.role !== 'Admin') {
                 return next(new CustomError('Admin privileges required', 'You do not have permission to delete orders', StatusCodes.FORBIDDEN));
             }
             const { orderId } = req.params;

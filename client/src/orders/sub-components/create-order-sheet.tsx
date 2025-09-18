@@ -51,7 +51,7 @@ const CreateOrderSheet = React.memo(({
 
     const handleOrderSubmit = async (data: OrderFormType) => {
         try {
-            await api.post('/order/add-order', {
+            const res = await api.post('/order/add-order', {
                 customerName: data.customer,
                 items: data.items,
                 orderDate: data.date,
@@ -60,13 +60,13 @@ const CreateOrderSheet = React.memo(({
                 orderRepresentative: user?.name || 'Unknown',
            })
            orderForm.reset();
-           toast('Order placed successfully!', {
+           toast(res.data?.title, {
             classNames: {
                 title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
                 description: '!font-primary !font-medium !text-muted-foreground text-xs'
             },
             icon: <CircleCheckIcon  className='w-5 h-5 text-deep-sage-green-500'/>,
-            description: 'The new order has been placed to your orders.',
+            description: res.data?.description,
            })
         }
         catch (err) {
@@ -213,6 +213,7 @@ const CreateOrderSheet = React.memo(({
                                                                         field.onChange({
                                                                             ...field.value,
                                                                             [med.medicineName]: {
+                                                                                itemId: med.id,
                                                                                 category: med.category,
                                                                                 quantity: (field.value?.[med.medicineName]?.quantity ?? 0) + 1,
                                                                                 pricePerUnit: med.pricePerUnit
