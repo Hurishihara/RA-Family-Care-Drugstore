@@ -14,11 +14,14 @@ import type { User } from '@/types/user.type';
 import { toast } from 'sonner';
 import axios from 'axios';
 import type { ErrorResponse } from '@/types/error.response';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const LoginPage = () => {
 
     const { setIsAuthenticated, setUser } = useAuth();
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
     const loginForm = useForm<loginFormType>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -77,16 +80,16 @@ const LoginPage = () => {
 
     return (
         <>
-            <div className='grid grid-cols-12 h-screen overflow-hidden '>
-                <div className='col-span-6 flex justify-center'>
-                    <div className='flex flex-col items-start gap-10 mt-60'>
-                        <div className='flex flex-row gap-2 items-center'>
-                            <TabletsIcon className='w-9 h-9 rounded-lg text-deep-sage-green-700' />
-                            <h1 className='text-2xl font-primary font-black text-deep-sage-green-950'>RA Family Care</h1>
+            <div className='grid grid-cols-12 h-screen flex items-center overflow-hidden'>
+                <div className='base:col-span-12 lg:col-span-6 flex justify-center base:px-2 lg:px-0'>
+                    <div className='flex flex-col base:items-center lg:items-start gap-10'>
+                        <div className='flex flex-row gap-2'>
+                            <TabletsIcon className='base:w-6 lg:w-9 base:h-6 lg:w-9 rounded-lg text-deep-sage-green-700' />
+                            <h1 className='base:text-lg basexl:text-lg xs:text-lg sm:text-lg md:text-lg lg:text-2xl font-primary font-black text-deep-sage-green-950'>RA Family Care</h1>
                         </div>
-                        <div className='flex flex-col gap-3'>
-                            <h1 className='text-4xl font-primary font-bold text-deep-sage-green-950'>Access the Pharmacy System</h1>
-                            <p className='text-muted-foreground max-w-lg font-primary font-normal'>
+                        <div className='flex flex-col gap-3 items-center w-full'>
+                            <h1 className='base:text-2xl lg:text-4xl font-primary font-bold text-deep-sage-green-950'>Access the Pharmacy System</h1>
+                            <p className='text-muted-foreground base:max-w-xs lg:max-w-xl text-center font-primary font-normal base:text-xs lg:text-sm'>
                                 Please enter your username and password to manage inventory and records.
                             </p>
                         </div>
@@ -128,8 +131,10 @@ const LoginPage = () => {
                         </Form>
                     </div>
                 </div>
-                <div className='col-span-6 '>
-                    <img src={sampleLoginCover} alt="Login Cover" className='h-231 rounded-[4rem] p-10 w-screen' />
+                <div className='base:hidden lg:block col-span-6 w-full h-full'>
+                    <AspectRatio ratio={4/3} className='h-screen rounded-lg  base:p-0 2xl:p-5'>
+                        <img src={sampleLoginCover} alt="Login Cover" className='base:rounded-none 2xl:rounded-3xl object-cover w-full h-full' />
+                    </AspectRatio>
                 </div>
             </div>
         </>
