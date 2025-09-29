@@ -1,16 +1,17 @@
 import { type OrderWithTotalAndOrderRep } from '@/types/order.type';
 import { type ColumnDef } from '@tanstack/react-table';
-import { CalendarCheck2Icon, CircleXIcon, CreditCardIcon, HashIcon, LayersIcon, ScrollIcon, Trash2Icon, UserCheckIcon, ViewIcon, WifiOffIcon } from 'lucide-react';
+import { CalendarCheck2Icon, CircleCheckIcon, CircleXIcon, CreditCardIcon, HashIcon, LayersIcon, ScrollIcon, Trash2Icon, UserCheckIcon, ViewIcon, WifiOffIcon } from 'lucide-react';
 import gcashlogo from '../assets/GCash-Logo.png'
 import { formatDate } from 'date-fns';
 import React from 'react';
 import ViewOrderSheet from './sub-components/view-order-sheet';
 import { useAuth } from '@/hooks/auth.hook';
 import { hasPermission } from '@/utils/permission';
-import { api } from '@/utils/axios.config';
 import axios from 'axios';
 import type { ErrorResponse } from '@/types/error.response';
 import { toast } from 'sonner';
+import { useApiMutation } from '@/hooks/use-api';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
     {
@@ -26,17 +27,17 @@ export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
         cell: ({ row }) => {
             const orderId = row.getValue('orderId') as OrderWithTotalAndOrderRep['orderId'];
             return <div className='font-bold text-deep-sage-green-800'>
-                {`ORD-${orderId.toString().padStart(3, '0')}`}
+                {orderId ? `ORD-${orderId.toString().padStart(3, '0')}` : 'N/A'}
             </div>
         },
         filterFn: (row, columnId, value) => {
-            const orderId = row.getValue(columnId) as Pick<OrderWithTotalAndOrderRep, 'orderId'>;
+            const orderId = row.getValue(columnId) as OrderWithTotalAndOrderRep['orderId'];
             const formattedOrderId = `ORD-${orderId.toString().padStart(3, '0')}`;
             return formattedOrderId.toLowerCase().includes((value as string).toLowerCase());
         }
     },
     {
-        accessorKey: 'customer',
+        accessorKey: 'customerName',
         header: () => <div className='flex flex-row gap-1 items-center '>
             <div>
                 <UserCheckIcon className='h-4 w-4' />
@@ -46,7 +47,7 @@ export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-            return <div className='font-bold text-deep-sage-green-800'> {row.getValue('customer')} </div>
+            return <div className='font-bold text-deep-sage-green-800'> {row.getValue('customerName')} </div>
         }
     },
     {
@@ -90,7 +91,7 @@ export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
         }
     },
     {
-        accessorKey: 'date',
+        accessorKey: 'orderDate',
         header: () => <div className='flex flex-row gap-1 items-center '>
             <div>
                 <CalendarCheck2Icon className='h-4 w-4' />
@@ -100,7 +101,7 @@ export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
             </div>
         </div>,
         cell: ({ row }) => {
-            const date = row.getValue('date') as OrderWithTotalAndOrderRep['date'];
+            const date = row.getValue('orderDate') as OrderWithTotalAndOrderRep['orderDate'];
             return <div className='font-medium text-muted-foreground'> { formatDate(date, 'dd MMM yyyy, hh:mm a') } </div>
         }
     },
@@ -146,36 +147,69 @@ export const orderColumns: ColumnDef<OrderWithTotalAndOrderRep>[] = [
             const order = row.original;
             const [ isViewOrderSheetOpen, setIsViewOrderSheetOpen ] = React.useState(false);
             const { user } = useAuth();
-            
-            const handleDelete = async () => {
-                try {
-                    await api.delete(`/order/delete-order/${order.orderId}`);
-                    window.location.reload();
-                }
-                catch (err) {
-                    if (axios.isAxiosError(err)) {
-                        const error = err.response?.data as ErrorResponse;
-                        toast(error.title, {
+
+            const queryClient = useQueryClient();
+            const { mutate } = useApiMutation<{
+                title: string;
+                description: string;
+            }, unknown, Pick<OrderWithTotalAndOrderRep, 'orderId'>>({
+                url: `/order/delete-order/${order.orderId}`,
+                method: 'DELETE',
+            }, {
+                onSuccess: ({ title, description }) => {
+                    toast(title, {
+                        classNames: {
+                            title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                        },
+                         icon: <CircleCheckIcon className='w-5 h-5 text-deep-sage-green-500' />,
+                        description: description,
+                    })
+                    queryClient.invalidateQueries({ queryKey: ['orders'] });
+                    queryClient.invalidateQueries({ queryKey: ['bar-chart'] });
+                    queryClient.invalidateQueries({ queryKey: ['pie-chart'] });
+                },
+                onMutate: async (deletedOrder) => {
+                    await queryClient.cancelQueries({ queryKey: ['orders'] });
+                    await queryClient.cancelQueries({ queryKey: ['bar-chart'] });
+                    await queryClient.cancelQueries({ queryKey: ['pie-chart'] });
+                    const previousOrders = queryClient.getQueryData<OrderWithTotalAndOrderRep[]>(['orders']);
+                    const updatedOrders = previousOrders?.filter(order => order.orderId !== deletedOrder.orderId);
+                    queryClient.setQueryData(['orders'], updatedOrders);
+
+                    return { previousOrders };
+                },
+                onError: (error, _variables, context) => {
+                    if (axios.isAxiosError(error)) {
+                        const err = error.response?.data as ErrorResponse;
+                        toast(err.title, {
                             classNames: {
                                 title: '!font-primary !font-bold !text-red-500 text-md',
                                 description: '!font-primary !font-medium !text-muted-foreground text-xs'
                             },
                             icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                            description: error.description,
-                        });
+                            description: err.description,
+                        })
                         return;
                     }
-                    const error = err as ErrorResponse;
-                    toast(error.title, {
+                    const err = error as unknown as ErrorResponse;
+                    toast(err.title, {
                         classNames: {
                             title: '!font-primary !font-bold !text-red-500 text-md',
                             description: '!font-primary !font-medium !text-muted-foreground text-xs'
                         },
                         icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                        description: error.description,
-                    });
+                        description: err.description,
+                    })
+                    queryClient.setQueryData(['orders'], (context as { previousOrders: OrderWithTotalAndOrderRep[] }).previousOrders);
                     return;
                 }
+            })
+            
+            const handleDelete = async () => {
+                mutate({
+                    orderId: order.orderId
+                })
             }
 
             return (

@@ -1,9 +1,10 @@
 import OrderBarChart from '@/charts/orders-bar-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { type BarChartDashboardStats, type BarChartData, type BarChartDashboardAPIResponse, type SelectTimeframe } from '@/types/chart.type';
+import { useAuth } from '@/hooks/auth.hook';
+import { useApiQuery } from '@/hooks/use-api';
+import { type BarChartDashboardAPIResponse, type SelectTimeframe } from '@/types/chart.type';
 import type { ErrorResponse } from '@/types/error.response';
-import { api } from '@/utils/axios.config';
 import { getPercentageChange } from '@/utils/helper';
 import axios from 'axios';
 import { ArrowDownIcon, ArrowUpIcon, CircleXIcon, MoveRightIcon, WifiOffIcon } from 'lucide-react';
@@ -13,53 +14,56 @@ import { toast } from 'sonner';
 const TotalOrdersCard = () => {
 
     const [ timeframe, setTimeframe ] = React.useState<SelectTimeframe>('day');
-    const [ dashboardStats, setDashboardStats ] = React.useState<BarChartDashboardStats>({
-        day: { currentTotalOrders: 0, previousTotalOrders: 0 },
-        week: { currentTotalOrders: 0, previousTotalOrders: 0 },
-        month: { currentTotalOrders: 0, previousTotalOrders: 0 }
-    });
-    const [ barChartData, setBarChartData ] = React.useState<BarChartData>({
-        day: [],
-        week: [],
-        month: []
+    const { user } = useAuth();
+
+    const { data, isPending, error, isSuccess, isError } = useApiQuery<BarChartDashboardAPIResponse>({
+        url: '/chart/bar-chart-data',
+        queryKey: ['bar-chart'],
+        options: {
+            enabled: user !== null, // only run the query if user is defined
+            retry: 1,
+            staleTime: 1000 * 60 * 10, // Stale after 10 minutes
+            gcTime: 1000 * 60 * 30 // Cache for 30 minutes
+        }
     })
 
-    React.useEffect(() => {
-        const fetchDashboardStats = async () => {
-            try {
-                const { data } = await api.get<BarChartDashboardAPIResponse>('/chart/bar-chart-data');
-                setDashboardStats(data.BarChartDashboardStats);
-                setBarChartData(data.BarChartData);
-            }
-            catch (err) {
-                if (axios.isAxiosError(err)) {
-                    const error = err.response?.data as ErrorResponse;
-                    toast(error.title, {
-                        classNames: {
-                            title: '!font-primary !font-bold !text-red-500 text-md',
-                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                        },
-                        icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                        description: error.description,
-                    })
-                    return;
-                }
-                const error = err as ErrorResponse;
-                toast(error.title, {
-                    classNames: {
-                        title: '!font-primary !font-bold !text-red-500 text-md',
-                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                    },
-                    icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                    description: error.description,
-                })
-                return;
-            }
-        }
-        fetchDashboardStats();
-    }, [])
+    if (isPending) {
+        return (
+            <div>
+                Loading....
+            </div>
+        )
+    }
 
-    const currentPercentageChange = getPercentageChange(dashboardStats[timeframe].currentTotalOrders, dashboardStats[timeframe].previousTotalOrders);
+    if (error && isError) {
+        if (axios.isAxiosError(error)) {
+            const err = error.response?.data as ErrorResponse;
+            toast(err.title, {
+                classNames: {
+                    title: '!font-primary !font-bold !text-red-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                description: err.description,
+            })
+            return;
+        }
+        const err = error as unknown as ErrorResponse;
+        toast(err.title, {
+            classNames: {
+                title: '!font-primary !font-bold !text-red-500 text-md',
+                description: '!font-primary !font-medium !text-muted-foreground text-xs'
+            },
+            icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+            description: err.description,
+        })
+        return;
+    }
+
+    const currentPercentageChange = getPercentageChange(
+        data && isSuccess ? data.BarChartDashboardStats[timeframe].previousTotalOrders : 0,
+        data && isSuccess ? data.BarChartDashboardStats[timeframe].currentTotalOrders : 0
+    );
 
     return (
         <Card className='w-full border-2 border-deep-sage-green-200 mt-4'>
@@ -84,7 +88,7 @@ const TotalOrdersCard = () => {
                      Total Orders
                     </div>
                     <div className='base:text-3xl md:text-5xl font-primary font-bold text-deep-sage-green-800'>
-                     {dashboardStats[timeframe].currentTotalOrders}
+                     {data && isSuccess ? data.BarChartDashboardStats[timeframe].currentTotalOrders : 0}
                     </div>
                     <div className='flex flex-row items-center text-sm font-primary font-bold mt-3'>
                         {currentPercentageChange > 0 ? (
@@ -110,7 +114,10 @@ const TotalOrdersCard = () => {
                         </div>
                     </div>
                </div>
-               <OrderBarChart filter={timeframe} data={barChartData} />
+               <OrderBarChart
+                   filter={timeframe}
+                   data={isSuccess && data ? data.BarChartData : { day: [], week: [], month: [] }}
+               />
             </CardContent>
         </Card>
     )

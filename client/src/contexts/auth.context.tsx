@@ -1,11 +1,10 @@
 import React, { type FC, type ReactNode } from 'react';
 import type { User } from '@/types/user.type';
-import { api } from '@/utils/axios.config';
-import { useLocation } from 'react-router';
 import { toast } from 'sonner';
 import { CircleXIcon, WifiOffIcon } from 'lucide-react';
 import axios from 'axios';
 import type { ErrorResponse } from '@/types/error.response';
+import { useApiQuery } from '@/hooks/use-api';
 
 interface AuthContextProps {
     isAuthenticated: boolean;
@@ -21,51 +20,63 @@ const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [ isAuthenticated, setIsAuthenticated ] = React.useState<boolean>(false);
     const [ user, setUser ] = React.useState<User | null>(null);
     const [ loading, setLoading ] = React.useState<boolean>(true);
-    const location = useLocation()
+
+    // Check if the current route is login
+    const isLoginPage = location.pathname === '/login';
+
+    const { data, isPending, error, isSuccess, isError} = useApiQuery<User>({
+        url: '/auth/current-user',
+        queryKey: ['current-user'],
+        options: {
+            enabled: !isLoginPage, // only run the query if not on login page
+            retry: 1,
+            retryOnMount: false,
+            refetchOnWindowFocus: false,
+            staleTime: 1000 * 60 * 10, // Stale after 10 minutes
+            gcTime: 1000 * 60 * 30 // Cache for 30 minutes 
+        },
+    })
 
     React.useEffect(() => {
+        if (isPending) { 
+            return;
+        }
 
-        if (location.pathname === '/login') {
+        if (isSuccess && data) {
+            setUser(data);
+            setIsAuthenticated(true);
             setLoading(false);
             return;
         }
-        const fetchUser = async () => {
-            try {
-                const response = await api.get<User>('/auth/current-user');
-                setUser(response.data);
-                setIsAuthenticated(true);
-            }
-            catch (err) {
-                setIsAuthenticated(false);
-                if (axios.isAxiosError(err)) {
-                    const error = err.response?.data as ErrorResponse;
-                    toast(error.title, {
+
+        if (isError && error) {
+            setIsAuthenticated(false);
+            setLoading(false);
+            if (axios.isAxiosError(error)) {
+                const err = error.response?.data as ErrorResponse;
+                toast(err.title, {
                         classNames: {
                             title: '!font-primary !font-bold !text-red-500 text-md',
                             description: '!font-primary !font-medium !text-muted-foreground text-xs'
                         },
                         icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                        description: error.description,
+                        description: err.description,
                     })
-                    return;
-                }
-                const error = err as ErrorResponse;
-                toast(error.title, {
+                return;
+            }
+            const err = error as unknown as ErrorResponse;
+            toast(err.title, {
                     classNames: {
                         title: '!font-primary !font-bold !text-red-500 text-md',
                         description: '!font-primary !font-medium !text-muted-foreground text-xs'
                     },
                     icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                    description: error.description,
+                    description: err.description,
                 })
-                return;
-            }
-            finally {
-                setLoading(false);
-            }
+            return; 
         }
-        fetchUser();
-    }, [])
+    }, [ data, error, isPending, isSuccess, isError ])
+        
 
     return (
         <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, loading, setUser }}>

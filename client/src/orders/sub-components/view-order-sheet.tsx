@@ -21,7 +21,7 @@ const ViewOrderSheet = ({
             <SheetContent className='min-w-[450px]'>
                 <SheetHeader className='border-b-2 border-deep-sage-green-100'>
                     <SheetTitle className='font-primary text-deep-sage-green-800 font-bold text-xl'>
-                        #{`ORD-${order.orderId.toString().padStart(3, '0')}`}
+                        #{order.orderId ? `ORD-${order.orderId.toString().padStart(3, '0')}` : 'N/A'}
                     </SheetTitle>
                     <SheetDescription className='font-primary font-medium text-xs max-w-[200px]'>
                         Order details
@@ -33,7 +33,7 @@ const ViewOrderSheet = ({
                     </h2>
                     <div className='font-primary font-medium text-sm text-deep-sage-green-800'>
                         <h3>
-                            {formatDate(new Date(order.date), 'dd MMM yyy, hh:mm aaa')}
+                            {formatDate(new Date(order.orderDate), 'dd MMM yyy, hh:mm aaa')}
                         </h3>
                     </div>
                 </div>
@@ -46,7 +46,7 @@ const ViewOrderSheet = ({
                         Full name:
                     </h2>
                     <h3 className='font-primary text-sm font-medium text-deep-sage-green-800'>
-                        {order.customer}
+                        {order.customerName}
                     </h3>
                 </div>
                 <div className='px-4'>

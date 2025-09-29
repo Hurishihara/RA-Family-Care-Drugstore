@@ -34,7 +34,7 @@ class OrderController {
             }
             const { orderId } = req.params;
             const deletedOrder = await orderService.deleteOrder(orderId);
-            res.status(200).json({ message: 'Order deleted successfully', order: deletedOrder });
+            res.status(200).json({ title: 'Order deleted successfully', description: `The order with ID ${deletedOrder.id} has been deleted from your orders list.`});
         }
         catch (err) {
             if (err.message === 'Order not found') {

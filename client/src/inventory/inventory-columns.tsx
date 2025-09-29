@@ -1,12 +1,16 @@
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { type medicineFormType, type medicineType } from '@/types/medicine.type';
+import { type medicineType } from '@/types/medicine.type';
 import { type ColumnDef } from '@tanstack/react-table';
 import { formatDate } from 'date-fns';
-import { ArrowDownIcon, ArrowUpIcon, CalendarCheck2Icon, ChevronsUpDownIcon, HashIcon, PhilippinePesoIcon, Pill, SquarePenIcon, TagIcon, Trash2Icon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, CalendarCheck2Icon, ChevronsUpDownIcon, CircleCheckIcon, CircleXIcon, HashIcon, PhilippinePesoIcon, Pill, SquarePenIcon, TagIcon, Trash2Icon, WifiOffIcon } from 'lucide-react';
 import React from 'react';
 import EditMedicineDialog from './sub-components/edit-medicine-dialog';
-import { api } from '@/utils/axios.config';
+import { useQueryClient } from '@tanstack/react-query';
+import { useApiMutation } from '@/hooks/use-api';
+import { toast } from 'sonner';
+import axios from 'axios';
+import type { ErrorResponse } from '@/types/error.response';
 
 export const inventoryColumns: ColumnDef<medicineType>[] = [
     {
@@ -113,7 +117,7 @@ export const inventoryColumns: ColumnDef<medicineType>[] = [
     {
         id: 'actions',
         cell: ({ row }) => {
-            const [ selectedMedicine, setSelectedMedicine ] = React.useState<medicineFormType & { id: string } | undefined>(undefined);
+            const [ selectedMedicine, setSelectedMedicine ] = React.useState<medicineType | undefined>(undefined);
             const [ isDialogOpen, setIsDialogOpen ] = React.useState(false);
             const medicine = row.original;
             
@@ -131,13 +135,62 @@ export const inventoryColumns: ColumnDef<medicineType>[] = [
                 setIsDialogOpen(!isDialogOpen);
             }
 
+            const queryClient = useQueryClient();
+
+            const { mutate } = useApiMutation<{
+                title: string;
+                description: string;
+            }, unknown, Pick<medicineType, 'id'>>({
+                url: `/inventory/delete-inventory/${medicine.id}`,
+                method: 'DELETE'
+            }, {
+                onSuccess: ({ title, description }) => {
+                    toast(title, {
+                        classNames: {
+                            title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                        },
+                        icon: <CircleCheckIcon className='w-5 h-5 text-deep-sage-green-500' />,
+                        description: description,
+                    })
+                    queryClient.invalidateQueries({ queryKey: ['inventory'] });
+                    return;
+                },
+                onMutate: async (deletedMedicine) => {
+                    await queryClient.cancelQueries({ queryKey: ['inventory'] });
+                    const previousInventory = queryClient.getQueryData<medicineType[]>(['inventory']);
+                    const updatedInventory = previousInventory?.filter(item => item.id !== deletedMedicine.id);
+                    queryClient.setQueryData(['inventory'], updatedInventory);
+                    return { previousInventory };
+                },
+                onError: (error, _variables, context) => {
+                    if (axios.isAxiosError(error)) {
+                        const err = error.response?.data as ErrorResponse;
+                        toast(err.title, {
+                            classNames: {
+                                title: '!font-primary !font-bold !text-red-500 text-md',
+                                description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                            },
+                            icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                            description: err.description,
+                        })
+                        return;
+                    }
+                    const err = error as unknown as ErrorResponse;
+                    toast(err.title, {
+                        classNames: {
+                            title: '!font-primary !font-bold !text-red-500 text-md',
+                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                        },
+                        icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+                        description: err.description,
+                    })
+                    queryClient.setQueryData(['inventory'], ( context as { previousInventory: medicineType[] }).previousInventory);
+                    return;
+                }
+            })
             const handleDelete = async () => {
-                try {
-                    await api.delete(`/inventory/delete-inventory/${medicine.id}`);
-                }
-                catch (err) {
-                    console.log(err);
-                }
+                mutate({ id: medicine.id });
             }
 
             return (

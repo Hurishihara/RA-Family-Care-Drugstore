@@ -1,5 +1,4 @@
 import { StatusCodes } from 'http-status-codes';
-import user from '../db/models/user.js';
 import inventoryService from '../services/inventory.service.js';
 import CustomError from '../utils/error.js';
 
@@ -7,8 +6,8 @@ class InventoryController {
     async addItem(req, res, next) {
         try {
             const { medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived } = req.body;
-            const newItem = await inventoryService.addItem(medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived);
-            res.status(201).json({ message: 'Item added successfully', item: newItem });
+            const addedMedicine = await inventoryService.addItem(medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived);
+            res.status(201).json({ title: 'Medicine added to inventory successfully!', description: `${medicineName} has been added to your inventory.` });
         }
         catch (err) {
            return next(new CustomError('Failed to add item', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
@@ -17,24 +16,23 @@ class InventoryController {
     async getAllItems(req, res) {
         try {
             const items = await inventoryService.getAllItems();
+            console.log('I got called');
             res.status(200).json(items);
         }
         catch (err) {
            return next(new CustomError('Failed to fetch items', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
-    async updateItemById(req, res) {
+    async updateItemById(req, res, next) {
         try {
             const currentUser = req.user;
             if (!currentUser || currentUser.role !== 'Admin') {
-                return res.status(403).json({ error: 'Forbidden' });
+                return next(new CustomError('Admin privileges required', 'You do not have permission to update items', StatusCodes.FORBIDDEN));
             }
             const { id } = req.params;
             const { fields } = req.body;
             const updatedItem = await inventoryService.updateItemById(id, fields);
-            console.log('Fields to update:', fields);
-            console.log('Updated Item:', updatedItem);
-            res.status(200).json(updatedItem);
+            res.status(200).json({ title: 'Medicine details updated successfully!', description: `${updatedItem.medicineName} has been updated.`, item: updatedItem });
         }
         catch (err) {
             if (err.message === 'Item not found') {
@@ -51,7 +49,7 @@ class InventoryController {
             }
             const { id } = req.params;
             const deletedItem = await inventoryService.deleteItemById(id);
-            res.status(200).json({ message: 'Item deleted successfully', item: deletedItem });
+            res.status(200).json({ title: 'Medicine deleted successfully!', description: `${deletedItem.name} has been removed from your inventory.` });
         }
         catch (err) {
             if (err.message === 'Item not found') {

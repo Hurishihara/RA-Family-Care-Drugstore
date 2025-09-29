@@ -8,10 +8,10 @@ class OrderService {
             const orders = await orderDB.getOrders();
             return orders.map(order => ({
                 orderId: order.id,
-                customer: order.customer_name,
+                customerName: order.customer_name,
                 total: Number(order.total),
                 items: order.items,
-                date: order.order_date,
+                orderDate: order.order_date,
                 paymentMethod: order.payment_method,
                 orderRepresentative: order.order_representative
             }))

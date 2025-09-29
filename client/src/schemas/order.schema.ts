@@ -1,11 +1,11 @@
 import z from 'zod';
 
 export const orderSchema = z.object({
-    customer: z.string()
+    customerName: z.string()
     .min(2, { message: 'Customer name must be at least 2 characters long.' })
     .max(30, { message: 'Customer name must not exceed 30 characters.' }),
 
-    date: z.date(),
+    orderDate: z.date(),
 
     items: z.record(
         z.string(), 

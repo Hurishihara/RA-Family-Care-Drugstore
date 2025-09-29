@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useAuth } from '@/hooks/auth.hook';
+import { useApiMutation, useApiQuery } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 import { orderSchema } from '@/schemas/order.schema';
 import type { ErrorResponse } from '@/types/error.response';
 import { type medicineType } from '@/types/medicine.type';
-import { type OrderFormType } from '@/types/order.type';
-import { api } from '@/utils/axios.config';
+import { type OrderWithTotalAndOrderRep, type OrderFormType } from '@/types/order.type';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Check, ChevronsUpDownIcon, CircleCheckIcon, CircleXIcon, TrashIcon, WifiOffIcon } from 'lucide-react';
 import React from 'react';
@@ -32,16 +33,13 @@ const CreateOrderSheet = React.memo(({
     onOpenChange
 }: CreateOrderSheetProps) => {
 
-    const { user } = useAuth()
-    const [ medicineData, setMedicineData ] = React.useState<Pick<medicineType, 'medicineName' | 'pricePerUnit' | 'category' | 'id'>[]>([]);
-    const [ isLoading, setIsLoading ] = React.useState<boolean>(true);
-    const [ total, setTotal ] = React.useState<number>(0);
+    const { user } = useAuth();
 
     const orderForm = useForm<OrderFormType>({
         resolver: zodResolver(orderSchema),
         defaultValues: {
-            customer: '',
-            date: new Date(),
+            customerName: '',
+            orderDate: new Date(),
             items: {},
             paymentMethod: undefined,
             
@@ -49,105 +47,93 @@ const CreateOrderSheet = React.memo(({
     })
     const items = orderForm.watch('items');
 
-    const handleOrderSubmit = async (data: OrderFormType) => {
-        try {
-            const res = await api.post('/order/add-order', {
-                customerName: data.customer,
-                items: data.items,
-                orderDate: data.date,
-                paymentMethod: data.paymentMethod,
-                total: total,
-                orderRepresentative: user?.name || 'Unknown',
-           })
-           orderForm.reset();
-           toast(res.data?.title, {
-            classNames: {
-                title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
-                description: '!font-primary !font-medium !text-muted-foreground text-xs'
-            },
-            icon: <CircleCheckIcon  className='w-5 h-5 text-deep-sage-green-500'/>,
-            description: res.data?.description,
-           })
-        }
-        catch (err) {
-            if (axios.isAxiosError(err)) {
-                const error = err.response?.data as ErrorResponse;
-                toast(error.title, {
+    const queryClient = useQueryClient();
+    const { mutate }  = useApiMutation<{
+        title: string;
+        description: string;
+    }, unknown, Omit<OrderWithTotalAndOrderRep, 'orderId'>>({
+        url: '/order/add-order',
+        method: 'POST',
+    }, {
+        onSuccess: ({ title, description }) => {
+            toast(title, {
+                classNames: {
+                    title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleCheckIcon  className='w-5 h-5 text-deep-sage-green-500'/>,
+                description: description,
+            }),
+            orderForm.reset();
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['pie-chart'] }); 
+            queryClient.invalidateQueries({ queryKey: ['bar-chart'] });
+            return
+        },
+        onMutate: async (newOrder) => {
+            await queryClient.cancelQueries({ queryKey: ['orders'] });
+            await queryClient.cancelQueries({ queryKey: ['inventory'] });
+            await queryClient.cancelQueries({ queryKey: ['pie-chart'] });
+            await queryClient.cancelQueries({ queryKey: ['bar-chart'] });
+            const previousOrders = queryClient.getQueryData<OrderWithTotalAndOrderRep[]>(['orders']);
+            queryClient.setQueryData(['orders'], (old: OrderWithTotalAndOrderRep[]) => [
+                ...(old),
+                { ...newOrder }
+            ]);
+            return { previousOrders };
+        },
+        onError: (error, _variables, context) => {
+            if (axios.isAxiosError(error)) {
+                const err = error.response?.data as ErrorResponse;
+                toast(err.title, {
                     classNames: {
                         title: '!font-primary !font-bold !text-red-500 text-md',
                         description: '!font-primary !font-medium !text-muted-foreground text-xs'
                     },
                     icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                    description: error.description,
+                    description: err.description,
                 })
                 return;
             }
-            const error = err as ErrorResponse;
-            toast(error.title, {
+            const err = error as unknown as ErrorResponse;
+            toast(err.title, {
                 classNames: {
                     title: '!font-primary !font-bold !text-red-500 text-md',
                     description: '!font-primary !font-medium !text-muted-foreground text-xs'
                 },
                 icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                description: error.description,
+                description: err.description,
             })
+            queryClient.setQueryData(['orders'], (context as { previousOrders: OrderWithTotalAndOrderRep[] }).previousOrders);
             return;
         }
+    })
+    const { data, isPending, error, isSuccess, isError } = useApiQuery<medicineType[]>({
+        url: '/inventory/get-inventory',
+        queryKey: ['inventory'],
+        options: {
+            enabled: user !== null, // only run the query if user is defined
+            retry: 1,
+            staleTime: 1000 * 60 * 10, // Stale after 10 minutes
+            gcTime: 1000 * 60 * 30 // Cache for 30 minutes
+        }
+    })
+
+    const handleOrderSubmit = (data: OrderFormType) => {
+        mutate({
+            customerName: data.customerName,
+            items: data.items,
+            orderDate: data.orderDate,
+            paymentMethod: data.paymentMethod,
+            total: calculatedTotal,
+            orderRepresentative: user?.name || 'Unknown'
+        });
     }
-    
 
     const calculatedTotal = React.useMemo(() => {
         return Object.values(items ?? {}).reduce((sum, m) => sum + (m.quantity ?? 0) * (m.pricePerUnit ?? 0), 0);
     }, [items]);
-
-    React.useEffect(() => {
-        setTotal(calculatedTotal);
-    }, [items])
-
-    React.useEffect(() => {
-        const fetchMedicine = async () => {
-            try {
-                const res = await api.get<medicineType[]>('/inventory/get-inventory')
-                setMedicineData(res.data.map((med) => ({
-                    id: med.id,
-                    medicineName: med.medicineName,
-                    pricePerUnit: med.pricePerUnit,
-                    category: med.category
-                })))
-            }
-            catch (err) {
-                if (axios.isAxiosError(err)) {
-                    const error = err.response?.data as ErrorResponse;
-                    toast(error.title, {
-                        classNames: {
-                            title: '!font-primary !font-bold !text-red-500 text-md',
-                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                        },
-                        icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                        description: error.description,
-                    })
-                    return;
-                }
-                const error = err as ErrorResponse;
-                toast(error.title, {
-                    classNames: {
-                        title: '!font-primary !font-bold !text-red-500 text-md',
-                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                    },
-                    icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                    description: error.description,
-                })
-                return;
-            }
-            finally {
-                setTimeout(() => {
-                    setIsLoading(false);
-                }, 3000)
-            }
-        }
-        
-        fetchMedicine();
-    }, [])
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -163,16 +149,16 @@ const CreateOrderSheet = React.memo(({
                 <Form {...orderForm}>
                     <form id='create-order-form' onSubmit={orderForm.handleSubmit(handleOrderSubmit)}>
                         <div className='flex flex-col gap-2 mx-4'>
-                            <Label htmlFor='customer' className='font-primary text-deep-sage-green-800 font-semibold text-lg'>Customer</Label>
+                            <Label htmlFor='customerName' className='font-primary text-deep-sage-green-800 font-semibold text-lg'>Customer</Label>
                             <FormField
                             control={orderForm.control}
-                            name='customer'
+                            name='customerName'
                             render={({ field }) => (
                                 <FormItem className='flex flex-row justify-between items-center'>
                                     <FormLabel className='text-sm font-primary font-medium text-muted-foreground'>Full name:</FormLabel>
                                     <FormControl>
                                         <Input
-                                        id='customer'
+                                        id='customerName'
                                         className='w-60 font-primary font-normal text-black px-3 py-2 ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green-800 focus-visible:ring-offset-0 focus-visible:ring-0 rounded-md' 
                                         placeholder='Customer name' 
                                         {...field} />
@@ -204,11 +190,11 @@ const CreateOrderSheet = React.memo(({
                                                         <CommandInput className='font-primary font-medium' placeholder='Search medicine...' />
                                                         <CommandList>
                                                             <CommandGroup>
-                                                                {isLoading ? (
+                                                                {isPending ? (
                                                                     <div className='p-2 text-center font-primary font-normal text-deep-sage-green-800'>Loading medicines...</div>
-                                                                ) : medicineData.length === 0 ? (
+                                                                ) : isSuccess && data ? data.length === 0 ? (
                                                                     <div className='p-2 text-center font-primary font-normal text-deep-sage-green-800'>No medicines found.</div>
-                                                                ) : medicineData.map((med) => (
+                                                                ) : data.map((med) => (
                                                                     <CommandItem className='font-primary font-normal text-deep-sage-green-800' key={med.id} onSelect={() => {
                                                                         field.onChange({
                                                                             ...field.value,
@@ -223,7 +209,11 @@ const CreateOrderSheet = React.memo(({
                                                                         {med.medicineName}
                                                                         <Check className={cn('ml-auto', items[med.medicineName] ? 'opacity-100' : 'opacity-0')} />
                                                                     </CommandItem>
-                                                                ))}
+                                                                )): isError && error ? (
+                                                                    <div className='p-2 text-center font-primary font-normal text-deep-sage-green-800'>
+                                                                        Error fetching medicines.
+                                                                    </div>
+                                                                ) : null}
                                                             </CommandGroup>
                                                         </CommandList>
                                                     </Command>
@@ -288,7 +278,7 @@ const CreateOrderSheet = React.memo(({
                                 </FormItem>
                             )} />
                             <Label className='text-sm font-primary font-medium text-muted-foreground mx-4 mt-4'>
-                                Total:{' '} <span className='font-bold font-primary text-xl text-deep-sage-green-800 ml-auto'>₱{total.toFixed(2)}</span>
+                                Total:{' '} <span className='font-bold font-primary text-xl text-deep-sage-green-800 ml-auto'>₱{calculatedTotal.toFixed(2)}</span>
                             </Label>
                         </div>
                         <div className='p-4'>

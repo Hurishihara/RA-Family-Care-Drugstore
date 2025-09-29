@@ -53,11 +53,18 @@ export const useApiMutation = <
     options: UseMutationOptions<TData, TError, TVariables, TContext>
 ) => {
     return useMutation({
-        mutationFn: (variables: TVariables) => useApi<TData>({
-            url: config.url,
-            method: config.method,
-            data: variables
-        }),
+        mutationFn: async (variables: TVariables) => {
+            // For PATCH requests, wrap variables in { fields: ... } to match backend expected format
+            const dataToSend = config.method === 'PATCH' ? { fields: {
+                name: (variables as any).medicineName, 
+                ...variables
+            } } : variables;
+            return useApi<TData>({
+                url: config.url,
+                method: config.method,
+                data: dataToSend
+            })
+        },
         ...options
     })
 }

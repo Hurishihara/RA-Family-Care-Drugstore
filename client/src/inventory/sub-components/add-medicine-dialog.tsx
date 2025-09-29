@@ -5,15 +5,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
+import { useApiMutation } from '@/hooks/use-api'
 import { cn } from '@/lib/utils'
 import { medicineSchema} from '@/schemas/medicine.schema'
 import type { ErrorResponse } from '@/types/error.response'
-import { type medicineFormType } from '@/types/medicine.type'
-import { api } from '@/utils/axios.config'
+import { type medicineFormType, type medicineType } from '@/types/medicine.type'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { format } from 'date-fns'
-import { CalendarIcon, CircleCheck, CircleXIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon, WifiOffIcon } from 'lucide-react'
+import { CalendarIcon, CircleCheckIcon, CircleXIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon, WifiOffIcon } from 'lucide-react'
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -44,45 +45,66 @@ const AddMedicineDialog = React.memo(({
         shouldUnregister: true,
         mode: 'onSubmit'
     });
-   
-    const handleSubmitMedicine = async (data: medicineFormType) => {
-        try {
-            await api.post('inventory/add-inventory', data);
-            medicineForm.reset();
-            toast('Medicine added to inventory successfully!', {
+
+    const queryClient = useQueryClient();
+    const { mutate } = useApiMutation<{
+        title: string;
+        description: string;
+    }, unknown, medicineFormType>({
+        url: '/inventory/add-inventory',
+        method: 'POST',
+    }, {
+        onSuccess: ({ title, description }) => {
+            toast(title, {
                 classNames: {
                     title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
                     description: '!font-primary !font-medium !text-muted-foreground text-xs'
                 },
-                icon: <CircleCheck  className='w-5 h-5 text-deep-sage-green-500'/>,
-                description: 'The new medicine has been added to your inventory.',
-            });
+                icon: <CircleCheckIcon className='w-5 h-5 text-deep-sage-green-500' />,
+                description: description,
+            })
+            medicineForm.reset();
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
             return;
-        }
-        catch (err) {
-            if (axios.isAxiosError(err)) {
-                const error = err.response?.data as ErrorResponse;
-                toast(error.title, {
+        },
+        onMutate: async (newMedicine) => {
+            await queryClient.cancelQueries({ queryKey: ['inventory'] });
+            const previousInventory = queryClient.getQueryData<medicineType[]>(['inventory']);
+            queryClient.setQueryData(['inventory'], (old: medicineType[]) => [
+                ...(old),
+                { ...newMedicine }
+            ]);
+            return { previousInventory };
+        },
+        onError: (error, _variables, context) => {
+            if (axios.isAxiosError(error)) {
+                const err = error.response?.data as ErrorResponse;
+                toast(err.title, {
                     classNames: {
                         title: '!font-primary !font-bold !text-red-500 text-md',
                         description: '!font-primary !font-medium !text-muted-foreground text-xs'
                     },
                     icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                    description: error.description,
+                    description: err.description,
                 })
                 return;
             }
-            const error = err as ErrorResponse;
-            toast(error.title, {
+            const err = error as unknown as ErrorResponse;
+            toast(err.title, {
                 classNames: {
                     title: '!font-primary !font-bold !text-red-500 text-md',
                     description: '!font-primary !font-medium !text-muted-foreground text-xs'
                 },
                 icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                description: error.description,
+                description: err.description,
             })
+            queryClient.setQueryData(['inventory'], (context as { previousInventory: medicineType[] }).previousInventory);
             return;
         }
+    })
+   
+    const handleSubmitMedicine = (data: medicineFormType) => {
+        mutate(data)
     }
 
     return (

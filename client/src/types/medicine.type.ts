@@ -1,5 +1,5 @@
-import { medicineSchema } from "@/schemas/medicine.schema.ts";
-import { z } from "zod";
+import { medicineSchema } from '@/schemas/medicine.schema.ts';
+import { z } from 'zod';
 
 type medicineFormType = z.infer<typeof medicineSchema>;
 

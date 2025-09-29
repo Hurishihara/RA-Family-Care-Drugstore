@@ -5,15 +5,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
+import { useApiMutation } from '@/hooks/use-api'
 import { cn } from '@/lib/utils'
 import { medicineSchema} from '@/schemas/medicine.schema'
 import type { ErrorResponse } from '@/types/error.response'
 import type { medicineFormType, medicineType } from '@/types/medicine.type'
-import { api } from '@/utils/axios.config'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { format } from 'date-fns'
-import { CalendarIcon, CircleXIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon, WifiOffIcon } from 'lucide-react'
+import { CalendarIcon, CircleCheckIcon, CircleXIcon, HashIcon, PhilippinePesoIcon, PillBottleIcon, TargetIcon, WifiOffIcon } from 'lucide-react'
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -43,53 +44,89 @@ const EditMedicineDialog = React.memo(({
         }
     });
 
-    const handleEditMedicine = async (value: medicineFormType) => {
-        try {
-            const { data } = await api.patch<medicineFormType>(`/inventory/edit-inventory/${medicineItem?.id}`, {
-                fields: {
-                    name: value.medicineName,
-                    category: value.category,
-                    quantity: value.quantity,
-                    pricePerUnit: value.pricePerUnit,
-                    costPerUnit: value.costPerUnit,
-                    expirationDate: value.expirationDate,
-                    dateReceived: value.dateReceived
-                }
-                
+    const queryClient = useQueryClient();
+    const { mutate } = useApiMutation<{
+        title: string;
+        description: string;
+        item: medicineType;
+    }, unknown, medicineType>({
+        url: `/inventory/edit-inventory/${medicineItem?.id}`,
+        method: 'PATCH', 
+    }, {
+        onSuccess: ({ title, description, item }) => {
+            const { medicineName, category, quantity, pricePerUnit, costPerUnit, expirationDate, dateReceived } = item;
+            medicineForm.setValue('medicineName', medicineName);
+            medicineForm.setValue('category', category);
+            medicineForm.setValue('quantity', quantity);
+            medicineForm.setValue('pricePerUnit', pricePerUnit);
+            medicineForm.setValue('costPerUnit', costPerUnit);
+            medicineForm.setValue('expirationDate', new Date(expirationDate));
+            medicineForm.setValue('dateReceived', new Date(dateReceived));
+            toast(title, {
+                classNames: {
+                    title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleCheckIcon className='w-5 h-5 text-deep-sage-green-500' />,
+                description: description,
             })
-            medicineForm.setValue('medicineName', data.medicineName);
-            medicineForm.setValue('category', data.category);
-            medicineForm.setValue('quantity', data.quantity);
-            medicineForm.setValue('pricePerUnit', data.pricePerUnit);
-            medicineForm.setValue('costPerUnit', data.costPerUnit);
-            medicineForm.setValue('expirationDate', new Date(data.expirationDate));
-            medicineForm.setValue('dateReceived', new Date(data.dateReceived));
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
             return;
-        }
-        catch (err) {
-            if (axios.isAxiosError(err)) {
-                const error = err.response?.data as ErrorResponse;
-                toast(error.title, {
+        },
+        onMutate: async (editedMedicine) => {
+            await queryClient.cancelQueries({ queryKey: ['inventory'] });
+            const previousInventory = queryClient.getQueryData<medicineType[]>(['inventory']);
+            const updatedInventory = previousInventory?.map((item) => item.id === editedMedicine.id ? {
+                ...item,
+                ...editedMedicine
+            }: item);
+            queryClient.setQueryData(['inventory'], updatedInventory);
+            return { previousInventory };
+        },
+        onError: (error, _variables, context) => {
+            if (axios.isAxiosError(error)) {
+                const err = error.response?.data as ErrorResponse;
+                toast(err.title, {
                     classNames: {
                         title: '!font-primary !font-bold !text-red-500 text-md',
                         description: '!font-primary !font-medium !text-muted-foreground text-xs'
                     },
                     icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                    description: error.description,
+                    description: err.description,
                 })
+                queryClient.setQueryData(['inventory'], (context as { previousInventory: medicineType[] }).previousInventory);
                 return;
             }
-            const error = err as ErrorResponse;
-            toast(error.title, {
+            const err = error as unknown as ErrorResponse;
+            toast(err.title, {
                 classNames: {
                     title: '!font-primary !font-bold !text-red-500 text-md',
                     description: '!font-primary !font-medium !text-muted-foreground text-xs'
                 },
                 icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                description: error.description,
+                description: err.description,
             })
             return;
         }
+    })
+    const handleEditMedicine = async (value: medicineFormType) => {
+        // Ensure that only valid medicine items are edited
+        console.log('The ID of the medicine item to edit:', medicineItem?.id);
+        if (!medicineItem?.id) {
+            toast('Invalid Medicine Item', {
+                classNames: {
+                    title: '!font-primary !font-bold !text-red-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                description: 'The medicine item you are trying to edit does not exist.',
+            })
+            return;
+        }
+        mutate({
+            ...value,
+            id: medicineItem.id
+        })
     }
 
     return (

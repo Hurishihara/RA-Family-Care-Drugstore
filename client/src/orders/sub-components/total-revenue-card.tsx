@@ -1,65 +1,69 @@
 import RevenuePieChart from '@/charts/revenue-pie-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { type PieChartData, type PieChartDashboardAPIResponse, type PieChartDashboardStats, type SelectTimeframe } from '@/types/chart.type';
+import { useAuth } from '@/hooks/auth.hook';
+import { useApiQuery } from '@/hooks/use-api';
+import { type PieChartDashboardAPIResponse, type SelectTimeframe } from '@/types/chart.type';
 import type { ErrorResponse } from '@/types/error.response';
-import { api } from '@/utils/axios.config';
 import { getPercentageChange } from '@/utils/helper';
 import axios from 'axios';
 import { ArrowDownIcon, ArrowUpIcon, CircleXIcon, MoveRightIcon, WifiOffIcon } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
 
-const TotalRevenueCard = () => {
+const TotalRevenueCard = () => { 
 
     const [timeframe, setTimeframe] = React.useState<SelectTimeframe>('day');
-    const [ pieChartDashboardStats, setpieChartDashboardStats ] = React.useState<PieChartDashboardStats>({
-        day: { currentTotalRevenue: 0, previousTotalRevenue: 0 },
-        week: { currentTotalRevenue: 0, previousTotalRevenue: 0 },
-        month: { currentTotalRevenue: 0, previousTotalRevenue: 0 }
-    })
-    const [ pieChartData, setPieChartData ] = React.useState<PieChartData>({
-        day: [],
-        week: [],
-        month: []
-    })
+    const { user } = useAuth();
 
-    React.useEffect(() => {
-        const fetchTotalRevenueStats = async () => {
-            try {
-                const { data } = await api.get<PieChartDashboardAPIResponse>('/chart/pie-chart-data');
-                setpieChartDashboardStats(data.PieChartDashboardStats);
-                setPieChartData(data.PieChartData);
-            }
-            catch (err) {
-                if (axios.isAxiosError(err)) {
-                    const error = err.response?.data as ErrorResponse;
-                    toast(error.title, {
-                        classNames: {
-                            title: '!font-primary !font-bold !text-red-500 text-md',
-                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                        },
-                        icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
-                        description: error.description,
-                    })
-                    return;
-                }
-                const error = err as ErrorResponse;
-                toast(error.title, {
-                    classNames: {
-                        title: '!font-primary !font-bold !text-red-500 text-md',
-                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                    },
-                    icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                    description: error.description,
-                })
-                return;
-            }
+    const { data, isPending, error, isSuccess, isError } = useApiQuery<PieChartDashboardAPIResponse>({
+        url: '/chart/pie-chart-data',
+        queryKey: ['pie-chart'],
+        options: {
+            enabled: user !== null, // only run the query if user is defined
+            retry: 1,
+            staleTime: 1000 * 60 * 10, // Stale after 10 minutes
+            gcTime: 1000 * 60 * 30 // Cache for 30 minutes
         }
-        fetchTotalRevenueStats();
-    }, [])
+    })
 
-    const currentPercentageChange = getPercentageChange(pieChartDashboardStats[timeframe].currentTotalRevenue, pieChartDashboardStats[timeframe].previousTotalRevenue);
+    if (isPending) {
+        return (
+            <div>
+                Loading....
+            </div>
+        )
+    }
+
+    if (error && isError) {
+        if (axios.isAxiosError(error)) {
+            const err = error.response?.data as ErrorResponse;
+            toast(err.title, {
+                classNames: {
+                    title: '!font-primary !font-bold !text-red-500 text-md',
+                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                },
+                icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                description: err.description,
+            })
+            return;
+        }
+        const err = error as unknown as ErrorResponse;
+        toast(err.title, {
+            classNames: {
+                title: '!font-primary !font-bold !text-red-500 text-md',
+                description: '!font-primary !font-medium !text-muted-foreground text-xs'
+            },
+            icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
+            description: err.description,
+        })
+        return;
+    }
+
+    const currentPercentageChange = getPercentageChange(
+        data && isSuccess ? data.PieChartDashboardStats[timeframe].previousTotalRevenue : 0,
+        data && isSuccess ? data.PieChartDashboardStats[timeframe].currentTotalRevenue : 0
+    );
 
     return (
         <Card className='w-full border-2 border-deep-sage-green-200 mt-4'>
@@ -84,7 +88,7 @@ const TotalRevenueCard = () => {
                         Total Revenue
                     </div>
                     <div className='base:text-3xl md:text-5xl font-primary font-bold text-deep-sage-green-800'>
-                        {`₱${pieChartDashboardStats[timeframe].currentTotalRevenue}`}
+                        {data && isSuccess ? `₱${data.PieChartDashboardStats[timeframe].currentTotalRevenue}`: '₱0.00'}
                     </div>
                     <div className='flex flex-row gap-1 items-center text-sm font-primary font-bold mt-3'>
                         {currentPercentageChange > 0 ? (
@@ -110,7 +114,7 @@ const TotalRevenueCard = () => {
                         </div>
                     </div>
                </div>
-               <RevenuePieChart filter={timeframe} data={pieChartData}/>
+               <RevenuePieChart filter={timeframe} data={isSuccess && data ? data.PieChartData : { day: [], week: [], month: [] }}/>
             </CardContent>
         </Card>
     )

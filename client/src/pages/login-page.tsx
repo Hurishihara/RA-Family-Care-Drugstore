@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import type { loginFormType } from '@/types/login.type';
-import { api } from '@/utils/axios.config';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/hooks/auth.hook';
 import type { User } from '@/types/user.type';
@@ -15,6 +14,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import type { ErrorResponse } from '@/types/error.response';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { useApiMutation } from '@/hooks/use-api';
 
 const LoginPage = () => {
 
@@ -23,57 +23,62 @@ const LoginPage = () => {
     const loginForm = useForm<loginFormType>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            username: '',
+            userName: '',
             password: ''
         }
     })
-
-    const handleLogin = async (data: loginFormType) => {
-        try {
-            const res = await api.post<{
-                message: string;
-                user: User;
-            }>('/auth/login', {
-                userName: data.username,
-                password: data.password
-            });
-            setIsAuthenticated(true);
-            setUser(res.data.user);
-            toast('Login successful!', {
-                classNames: {
-                    title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
-                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                },
-                icon: <CircleCheckIcon className='w-5 h-5 text-deep-sage-green-500' />,
-                description: `Welcome back, ${res.data.user.name}!`,
-            })
-            navigate('/inventory');
-            
-        }
-        catch (err) {
-            if (axios.isAxiosError(err)) {
-                const error = err.response?.data as ErrorResponse;
+    
+    const { mutate } = useApiMutation<{
+        message: string;
+        user: User;
+    }, unknown, loginFormType>(
+        {
+            url: '/auth/login',
+            method: 'POST',
+        },
+        {
+            onSuccess: ({ message, user }) => {
+                setIsAuthenticated(true);
+                setUser(user);
+                toast(message, {
+                    classNames: {
+                        title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',
+                        description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                    },
+                    icon: <CircleCheckIcon className='w-5 h-5 text-deep-sage-green-500' />,
+                    description: `Welcome back, ${user.name}!`,
+                })
+                navigate('/inventory');
+            },
+            onError: (err, _variables, _context) => {
+                if (axios.isAxiosError(err)) {
+                    const error = err.response?.data as ErrorResponse;
+                    toast(error.title, {
+                        classNames: {
+                            title: '!font-primary !font-bold !text-red-500 text-md',
+                            description: '!font-primary !font-medium !text-muted-foreground text-xs'
+                        },
+                        icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                        description: error.description,
+                    })
+                    return;
+                }
+                const error = err as ErrorResponse;
                 toast(error.title, {
                     classNames: {
                         title: '!font-primary !font-bold !text-red-500 text-md',
                         description: '!font-primary !font-medium !text-muted-foreground text-xs'
                     },
-                    icon: <CircleXIcon className='w-5 h-5 text-red-500' />,
+                    icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
                     description: error.description,
                 })
                 return;
             }
-            const error = err as ErrorResponse;
-            toast(error.title, {
-                classNames: {
-                    title: '!font-primary !font-bold !text-red-500 text-md',
-                    description: '!font-primary !font-medium !text-muted-foreground text-xs'
-                },
-                icon: <WifiOffIcon className='w-5 h-5 text-red-500' />,
-                description: error.description,
-            })
-            return;
         }
+    )
+    
+    const handleLogin = async (data: loginFormType) => {
+        mutate(data);
     }
 
     return (
@@ -94,7 +99,7 @@ const LoginPage = () => {
                         <Form {...loginForm}>
                             <form id='login-form' onSubmit={loginForm.handleSubmit(handleLogin)}>
                                 <div className='flex flex-col gap-5 w-100'>
-                                    <FormField control={loginForm.control} name='username' render={({ field }) => (
+                                    <FormField control={loginForm.control} name='userName' render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className='font-primary font-semibold text-deep-sage-green-950'>Username</FormLabel>
                                             <FormControl>
