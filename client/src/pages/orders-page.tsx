@@ -7,10 +7,10 @@ import { toast } from 'sonner';
 import { CircleXIcon, WifiOffIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/auth.hook';
 import { useApiQuery } from '@/hooks/use-api';
+import OrderPageSkeleton from './sub-components/order-page-skeleton';
 
 const CustomOrdersTablePage = () => {
     const { user } = useAuth();
-
     const { data, isPending, error, isSuccess, isError } = useApiQuery<OrderWithTotalAndOrderRep[]>({
         url: '/order/get-orders',
         queryKey: ['orders'],
@@ -48,7 +48,13 @@ const CustomOrdersTablePage = () => {
     }
 
     return (
-        <OrderDataTable columns={orderColumns} data={isSuccess && data ? data : []} />
+        <>
+            {isPending ? (
+                <OrderPageSkeleton title='Orders Summary' description='View and manage all orders placed within the pharmacy' />
+            ) : (
+                <OrderDataTable columns={orderColumns} data={isSuccess && data ? data : []} />
+            )}
+        </>
     )
 }
 

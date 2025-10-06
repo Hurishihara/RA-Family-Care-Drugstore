@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/auth.hook';
 import { useApiMutation, useApiQuery } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
@@ -46,9 +47,8 @@ const CreateOrderSheet = React.memo(({
         }
     })
     const items = orderForm.watch('items');
-
     const queryClient = useQueryClient();
-    const { mutate }  = useApiMutation<{
+    const { mutate, isPending: isOrderMutationPending }  = useApiMutation<{
         title: string;
         description: string;
     }, unknown, Omit<OrderWithTotalAndOrderRep, 'orderId'>>({
@@ -109,7 +109,7 @@ const CreateOrderSheet = React.memo(({
             return;
         }
     })
-    const { data, isPending, error, isSuccess, isError } = useApiQuery<medicineType[]>({
+    const { data, isPending: isMedicineQueryPending, error, isSuccess, isError } = useApiQuery<medicineType[]>({
         url: '/inventory/get-inventory',
         queryKey: ['inventory'],
         options: {
@@ -129,6 +129,7 @@ const CreateOrderSheet = React.memo(({
             total: calculatedTotal,
             orderRepresentative: user?.name || 'Unknown'
         });
+        return;
     }
 
     const calculatedTotal = React.useMemo(() => {
@@ -160,7 +161,8 @@ const CreateOrderSheet = React.memo(({
                                         <Input
                                         id='customerName'
                                         className='w-60 font-primary font-normal text-black px-3 py-2 ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green-800 focus-visible:ring-offset-0 focus-visible:ring-0 rounded-md' 
-                                        placeholder='Customer name' 
+                                        placeholder='Customer name'
+                                        disabled={isOrderMutationPending}
                                         {...field} />
                                     </FormControl>
                                 </FormItem>
@@ -180,7 +182,7 @@ const CreateOrderSheet = React.memo(({
                                         <FormControl>
                                             <Popover>
                                                 <PopoverTrigger asChild>
-                                                    <Button variant='outline' className='font-medium font-primary text-muted-foreground cursor-pointer' role='combobox'>
+                                                    <Button variant='outline' className='font-medium font-primary text-muted-foreground cursor-pointer' role='combobox' disabled={orderForm.formState.isSubmitting}>
                                                         {field.value && Object.keys(field.value).length > 0 ? 'Add more medicines' : 'Select medicines'}
                                                         <ChevronsUpDownIcon />
                                                     </Button>
@@ -190,21 +192,31 @@ const CreateOrderSheet = React.memo(({
                                                         <CommandInput className='font-primary font-medium' placeholder='Search medicine...' />
                                                         <CommandList>
                                                             <CommandGroup>
-                                                                {isPending ? (
-                                                                    <div className='p-2 text-center font-primary font-normal text-deep-sage-green-800'>Loading medicines...</div>
+                                                                {isMedicineQueryPending ? (
+                                                                    <div className='space-y-1'>
+                                                                        <Skeleton className='h-7 w-full' />
+                                                                        <Skeleton className='h-7 w-full' />
+                                                                        <Skeleton className='h-7 w-full' />
+                                                                        <Skeleton className='h-7 w-full' />
+                                                                        <Skeleton className='h-7 w-full' />
+                                                                        <Skeleton className='h-7 w-full' />
+                                                                        <Skeleton className='h-7 w-full' />
+                                                                    </div>
                                                                 ) : isSuccess && data ? data.length === 0 ? (
                                                                     <div className='p-2 text-center font-primary font-normal text-deep-sage-green-800'>No medicines found.</div>
                                                                 ) : data.map((med) => (
                                                                     <CommandItem className='font-primary font-normal text-deep-sage-green-800' key={med.id} onSelect={() => {
-                                                                        field.onChange({
+                                                                        const updatedItems = {
                                                                             ...field.value,
                                                                             [med.medicineName]: {
                                                                                 itemId: med.id,
                                                                                 category: med.category,
-                                                                                quantity: (field.value?.[med.medicineName]?.quantity ?? 0) + 1,
+                                                                                quantity: field.value?.[med.medicineName]?.quantity || 1,
                                                                                 pricePerUnit: med.pricePerUnit
                                                                             }
-                                                                        })
+                                                                        };
+                                                                        field.onChange(updatedItems);
+                                                                        
                                                                     }}>
                                                                         {med.medicineName}
                                                                         <Check className={cn('ml-auto', items[med.medicineName] ? 'opacity-100' : 'opacity-0')} />
@@ -223,35 +235,39 @@ const CreateOrderSheet = React.memo(({
                                     </FormItem>
                                 <ScrollArea className='h-62 pr-4 mt-4 rounded-sm'>
                                     {Object.keys(field.value ?? {}).map((medicineName) => (
-                                                    <div key={medicineName} className='flex flex-row justify-between py-1 items-center mb-3'>
-                                                        <div className='flex flex-col gap-1 items-start w-30'>
-                                                            <Label className='font-primary font-medium text-deep-sage-green-800'>{medicineName}</Label>
-                                                            <Label className='font-secondary font-normal text-xs text-muted-foreground'>{field.value[medicineName]?.category}</Label>
-                                                        </div>
-                                                        <Input
-                                                            type='number'
-                                                            value={items[medicineName]?.quantity}
-                                                            onChange={(e) => {
-                                                                const newQuantity = parseInt(e.target.value) || 0;
-                                                                orderForm.setValue('items', {
-                                                                    ...items,
-                                                                    [medicineName]: {
-                                                                        ...items[medicineName],
-                                                                        quantity: newQuantity,
-                                                                        pricePerUnit: items[medicineName]?.pricePerUnit || 0
-                                                                    }
-                                                                }, { shouldDirty: true });
-                                                            }}
-                                                            className='w-30 font-secondary font-normal text-black ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green-800 focus-visible:ring-offset-0 focus-visible:ring-0'
-                                                        />
-                                                        <TrashIcon 
-                                                        className='w-4.5 text-deep-sage-green-800 cursor-pointer' 
-                                                        onClick={() => {
-                                                            const { [medicineName]: _, ...rest } = field.value;
-                                                            orderForm.setValue('items', rest, { shouldDirty: true })
-                                                        }}/>
-                                                    </div>
-                                                ))}
+                                        <div key={medicineName} className='flex flex-row justify-between py-1 items-center mb-3'>
+                                            <div className='flex flex-col gap-1 items-start w-30'>
+                                                <Label className='font-primary font-medium text-deep-sage-green-800'>{medicineName}</Label>
+                                                <Label className='font-secondary font-normal text-xs text-muted-foreground'>{field.value[medicineName]?.category}</Label>
+                                            </div>
+                                            <Input
+                                                type='number'
+                                                value={items[medicineName]?.quantity}
+                                                onChange={(e) => {
+                                                    const newQuantity = parseInt(e.target.value) || 0;
+                                                    orderForm.setValue('items', {
+                                                        ...items,
+                                                        [medicineName]: {
+                                                            ...items[medicineName],
+                                                            quantity: newQuantity,
+                                                            pricePerUnit: items[medicineName]?.pricePerUnit || 0
+                                                        }
+                                                    }, { shouldDirty: true });
+                                                }}
+                                                className='w-30 font-secondary font-normal text-black ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green-800 focus-visible:ring-offset-0 focus-visible:ring-0'
+                                                disabled={isOrderMutationPending}
+                                            />
+                                            <TrashIcon 
+                                                className={`w-4.5 text-deep-sage-green-800 cursor-pointer ${isOrderMutationPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                onClick={() => {
+                                                    if (orderForm.formState.isSubmitting) return;
+                                                    const { [medicineName]: _, ...rest } = field.value;
+                                                    orderForm.setValue('items', rest, { shouldDirty: true })
+                                                }} 
+                                                style={{ pointerEvents: orderForm.formState.isSubmitting ? 'none' : 'auto' }}
+                                            />
+                                        </div>
+                                    ))}
                                 </ScrollArea>
                            </>
                            )} />
@@ -264,7 +280,7 @@ const CreateOrderSheet = React.memo(({
                             <FormField control={orderForm.control} name='paymentMethod' render={({ field }) => (
                                 <FormItem className='flex flex-row mx-4 justify-between items-center'>
                                     <FormLabel className='text-sm font-primary font-medium text-muted-foreground'>Payment method:</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isOrderMutationPending}>
                                         <FormControl>
                                             <SelectTrigger className='font-primary font-medium cursor-pointer'>
                                                 <SelectValue placeholder='Select payment method' />
@@ -291,18 +307,49 @@ const CreateOrderSheet = React.memo(({
                         <Button 
                         type='button' 
                         size='default' 
-                        variant='outline' 
+                        variant='outline'
+                        disabled={isOrderMutationPending} 
                         className='cursor-pointer font-secondary font-normal text-deep-sage-green-800 hover:text-deep-sage-green-800 w-30'>
                             Cancel 
                         </Button>
                     </SheetClose>
+                    {/* Disable if submitting and empty items */}
                     <Button  
                     type='submit' 
                     size='default' 
                     variant='outline'
-                    className='font-secondary font-semibold text-white bg-deep-sage-green-800 hover:bg-deep-sage-green-600 hover:text-white cursor-pointer w-30'
+                    disabled={isOrderMutationPending || Object.keys(items ?? {}).length === 0 }
+                    className='font-secondary font-semibold text-white bg-deep-sage-green-800 hover:bg-deep-sage-green-600 hover:text-white cursor-pointer w-35 transition-all ease-in-out duration-200'
                     form='create-order-form'>
-                        Place Order
+                        {isOrderMutationPending ? (
+                            <>
+                                <svg
+                                className='animate-spin mr-2'
+                                fill='none'
+                                height='20'
+                                viewBox='0 0 20 20'
+                                width='20'
+                                xmlns='http://www.w3.org/2000/svg'
+                                aria-hidden='true'
+                                >
+                                    <circle
+                                    cx='10'
+                                    cy='10'
+                                    r='8'
+                                    stroke='currentColor'
+                                    strokeWidth='2'
+                                    className='stroke-gray-300'
+                                    />
+                                    <path
+                                    fill='currentColor'
+                                    d='M18 10c0 4.4183-3.5817 8-8 8s-8-3.5817-8-8h2c0 3.3137 2.6863 6 6 6s6-2.6863 6-6h2z'
+                                    />
+                                </svg>
+                                Processing...
+                            </>
+                        ) : (
+                            'Place Order'
+                        )}
                     </Button>
                 </SheetFooter>
             </SheetContent>

@@ -8,6 +8,7 @@ import type { ErrorResponse } from '@/types/error.response';
 import { toast } from 'sonner';
 import { CircleXIcon, WifiOffIcon } from 'lucide-react';
 import { useApiQuery } from '@/hooks/use-api';
+import InventoryPageSkeleton from '@/pages/sub-components/inventory-page-skeleton';
 
 const CustomInventoryTablePage = () => {
     const { user } = useAuth();
@@ -55,7 +56,15 @@ const CustomInventoryTablePage = () => {
     }
     
     return (
-        <InventoryDataTable columns={filteredInventoryColumns} data={isSuccess && data ? data : []} />
+        <>
+          {isPending ? (
+            <div>
+              <InventoryPageSkeleton title='Inventory Summary' description='View and manage all medications in your pharmacy stock' />
+            </div>
+          ) : (
+            <InventoryDataTable columns={filteredInventoryColumns} data={isSuccess && data ? data : []} />
+          )}
+        </>
     )
 }
 

@@ -45,7 +45,7 @@ const EditMedicineDialog = React.memo(({
     });
 
     const queryClient = useQueryClient();
-    const { mutate } = useApiMutation<{
+    const { mutate, isPending: isMedicineMutationPending } = useApiMutation<{
         title: string;
         description: string;
         item: medicineType;
@@ -111,7 +111,6 @@ const EditMedicineDialog = React.memo(({
     })
     const handleEditMedicine = async (value: medicineFormType) => {
         // Ensure that only valid medicine items are edited
-        console.log('The ID of the medicine item to edit:', medicineItem?.id);
         if (!medicineItem?.id) {
             toast('Invalid Medicine Item', {
                 classNames: {
@@ -158,6 +157,7 @@ const EditMedicineDialog = React.memo(({
                                         <FormControl>
                                             <Input
                                                 className={`font-primary font-medium px-10 ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green focus-visible:ring-offset-0 focus-visible:ring-0 ${medicineForm.formState.errors.medicineName ? 'focus:!border-red-500' : ''}`}
+                                                disabled={isMedicineMutationPending}
                                                 {...field}
                                             />
                                         </FormControl>
@@ -183,7 +183,7 @@ const EditMedicineDialog = React.memo(({
                                                 <Input
                                                     id='category'
                                                     className={`font-primary font-medium px-10 ring-0 border-2 border-deep-sage-green-100 focus:!border-deep-sage-green focus-visible:ring-offset-0 focus-visible:ring-0 ${medicineForm.formState.errors.category ? 'focus:!border-red-500' : ''}`}
-                                                    disabled={medicineForm.formState.isSubmitting}
+                                                    disabled={isMedicineMutationPending}
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -214,6 +214,7 @@ const EditMedicineDialog = React.memo(({
                                                     ...field,
                                                     onChange: (e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value ? Number(e.target.value) : '')
                                                 }}
+                                                disabled={isMedicineMutationPending}
                                             />
                                         </FormControl>
                                         <FormMessage className='font-primary font-medium absolute left-0 top-16.5 text-xs' />
@@ -243,6 +244,7 @@ const EditMedicineDialog = React.memo(({
                                                     ...field,
                                                     onChange: (e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value ? Number(e.target.value) : ''),
                                                 }}
+                                                disabled={isMedicineMutationPending}
                                             />
                                         </FormControl>
                                         <FormMessage className='font-primary font-medium absolute left-0 top-16.5 text-xs' />
@@ -270,6 +272,7 @@ const EditMedicineDialog = React.memo(({
                                                     ...field,
                                                     onChange: (e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value ? Number(e.target.value): ''),
                                                 }}
+                                                disabled={isMedicineMutationPending}
                                             />
                                         </FormControl>
                                         <FormMessage className='font-primary font-medium absolute left-0 top-15 text-xs' />
@@ -294,6 +297,7 @@ const EditMedicineDialog = React.memo(({
                                                     <Button
                                                         variant='outline'
                                                         className={cn('font-primary font-medium w-full text-right', !field.value && 'font-primary font-mediumtext-muted-foreground')}
+                                                        disabled={isMedicineMutationPending}
                                                     >
                                                         <CalendarIcon
                                                             className={`absolute left-3 top-11.5 transform -translate-y-1/2 text-deep-sage-green-700 ${medicineForm.formState.errors.expirationDate ? 'text-red-500' : ''}`}
@@ -333,6 +337,7 @@ const EditMedicineDialog = React.memo(({
                                                     <Button
                                                         variant='outline'
                                                         className={cn('font-primary font-medium w-full text-right', !field.value && 'font-primary font-medium text-muted-foreground')}
+                                                        disabled={isMedicineMutationPending}
                                                     >
                                                         <CalendarIcon
                                                             className={`absolute left-3 top-11.5 transform -translate-y-1/2 text-deep-sage-green-700 ${medicineForm.formState.errors.dateReceived ? 'text-red-500' : ''}`}
@@ -365,11 +370,44 @@ const EditMedicineDialog = React.memo(({
                 <Separator className='border-b-2 border-deep-sage-green-100' />
                 <DialogFooter className='mt-4 flex flex-row gap-2'>
                     <div className='flex flex-row justify-center gap-3 w-full'>
-                        <Button type='reset' variant='ghost' className='font-secondary font-semibold hover:bg-deep-sage-green-100 cursor-pointer' onClick={() => {medicineForm.reset(), onOpenChange(false)}}>
+                        <Button 
+                        type='reset' 
+                        variant='ghost' 
+                        className='font-secondary font-semibold hover:bg-deep-sage-green-100 cursor-pointer'
+                        onClick={() => {medicineForm.reset(), onOpenChange(false)}}
+                        disabled={isMedicineMutationPending}>
                             Cancel
                         </Button>
                         <Button type='submit' variant='outline' form='add-medicine-form' className='font-secondary font-bold bg-deep-sage-green-800 text-white hover:bg-deep-sage-green-600 hover:text-white cursor-pointer'>
-                            Edit Details
+                            {isMedicineMutationPending ? (
+                                <>
+                                    <svg
+                                     className='animate-spin mr-2'
+                                    fill='none'
+                                    height='20'
+                                    viewBox='0 0 20 20'
+                                    width='20'
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    aria-hidden='true'
+                                    >
+                                        <circle
+                                          cx='10'
+                                          cy='10'
+                                          r='8'
+                                          stroke='currentColor'
+                                          strokeWidth='2'
+                                          className='stroke-gray-300'
+                                        />
+                                        <path
+                                          fill='currentColor'
+                                          d='M18 10c0 4.4183-3.5817 8-8 8s-8-3.5817-8-8h2c0 3.3137 2.6863 6 6 6s6-2.6863 6-6h2z'
+                                        />
+                                    </svg>
+                                    Processing...
+                                </>
+                            ) : (
+                                'Edit Details'
+                            )}
                         </Button>
                     </div>
                 </DialogFooter>

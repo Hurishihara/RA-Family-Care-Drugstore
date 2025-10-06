@@ -16,7 +16,6 @@ class InventoryController {
     async getAllItems(req, res) {
         try {
             const items = await inventoryService.getAllItems();
-            console.log('I got called');
             res.status(200).json(items);
         }
         catch (err) {
