@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import chartController from '../controllers/chart.controller.js';
-import authValidation from '../middleware/auth.js';
+import { authValidation } from '../middleware/auth.js';
 
 
 const chartRouter = Router();

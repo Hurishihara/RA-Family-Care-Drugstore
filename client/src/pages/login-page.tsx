@@ -31,15 +31,17 @@ const LoginPage = () => {
     const { mutate } = useApiMutation<{
         message: string;
         user: User;
+        accessToken: string;
     }, unknown, loginFormType>(
         {
             url: '/auth/login',
             method: 'POST',
         },
         {
-            onSuccess: ({ message, user }) => {
+            onSuccess: ({ message, user, accessToken }) => {
                 setIsAuthenticated(true);
                 setUser(user);
+                localStorage.setItem('accessToken', accessToken);
                 toast(message, {
                     classNames: {
                         title: '!font-primary !font-bold !text-deep-sage-green-500 text-md',

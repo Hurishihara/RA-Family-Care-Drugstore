@@ -17,6 +17,7 @@ const NavUser = ({
     const handleLogout = async () => {
         try {
             await api.post('/auth/logout')
+            localStorage.removeItem('accessToken');
             navigate('/login');
         }
         catch (err) {

@@ -1,5 +1,5 @@
 import authService from '../services/auth.service.js';
-import { serialize } from 'cookie';
+import { parse, serialize } from 'cookie';
 import CustomError from '../utils/error.js';
 import { StatusCodes } from 'http-status-codes';
 
@@ -7,15 +7,19 @@ class AuthController {
     async loginUser(req, res, next) {
         try {
             const { userName, password } = req.body;
-            const { token, user } = await authService.loginUser(userName, password);
-            res.setHeader('Set-Cookie', serialize('authToken', token, {
+            const { accessToken, refreshToken, user } = await authService.loginUser(userName, password);
+            res.setHeader('Set-Cookie', serialize('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: false,
                 sameSite: 'strict',
-                maxAge: 60 * 60 * 14, // 14 hours
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                 path: '/'
             }))
-            res.status(200).json({ message: 'Login successful', user: { id: user.id, name: user.name, role: user.role } });
+            res.status(200).json({
+                message: 'Login successful', 
+                user: { id: user.id, name: user.name, role: user.role },
+                accessToken: accessToken
+            });
         }
         catch (err) {
             if (err.message === 'Invalid username or password') {
@@ -27,7 +31,7 @@ class AuthController {
     }
     async logoutUser(req, res) {
         try {
-            res.clearCookie('authToken', {
+            res.clearCookie('refreshToken', {
                 httpOnly: true,
                 secure: false,
                 sameSite: 'strict',
@@ -56,6 +60,17 @@ class AuthController {
             next(new CustomError('Failed to retrieve user', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
             return;
         }
+    }
+    async refreshAccessToken(req, res, next) {
+        try {
+            const { userId, role } = req.user;
+            const { accessToken } = await authService.refreshAccessToken(userId, role);
+            res.status(200).json({ accessToken: accessToken, message: 'Access token refreshed successfully' });
+        }
+        catch (err) {
+            next(new CustomError('Failed to refresh access token', 'Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR));
+            return;
+        }   
     }
 }
 

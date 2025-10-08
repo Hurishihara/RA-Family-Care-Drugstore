@@ -9,8 +9,12 @@ class AuthService {
       if (user) {
         const passwordMatch = await comparePassword(password, user.password);
         if (passwordMatch) {
-          const token = generateJwtToken(user.id, user.role);
-          return { token, user };
+          const { accessToken, refreshToken } = generateJwtToken(user.id, user.role);
+          return {
+            refreshToken,
+            accessToken,
+            user
+          };
         }
         throw new Error('Invalid username or password');
       }
@@ -31,6 +35,16 @@ class AuthService {
     }
     catch (err) {
       console.error('AuthService: Failed fetching current user:', err);
+      throw err;
+    }
+  }
+  async refreshAccessToken(userId, role) {
+    try {
+      const { accessToken } = generateJwtToken(userId, role);
+      return { accessToken };
+    }
+    catch (err) {
+      console.error('AuthService: Failed refreshing access token:', err);
       throw err;
     }
   }
